@@ -32,26 +32,27 @@ Rules of Scheisskopf:
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 \cf0 \
 Challenges:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 
-\fs38 	Imperfect information: At any given point in the game, there are factors that are unknown to each player in the game. The contents and ordering of the deck, the unobserved contents of the opponents hand, and each player\'92s down cards, are all unknown. In practice, this uncertainty extends to the contents of the discard pile and possibly most of the contents of the opponents hand due to the limitations of memory for human players. A computer agent thus has the advantage of perfect memory of what it has seen; it may know the contents of the discard pile, as well as perhaps some of the opponent\'92s hand. 
+\fs38 \cf0 	Imperfect information: At any given point in the game, there are factors that are unknown to each player in the game. The contents and ordering of the deck, the unobserved contents of the opponents hand, and each player\'92s down cards, are all unknown. In practice, this uncertainty extends to the contents of the discard pile and possibly most of the contents of the opponents hand due to the limitations of memory for human players. A computer agent thus has the advantage of perfect memory of what it has seen; it may know the contents of the discard pile, as well as perhaps some of the opponent\'92s hand. Where the computer agent is less naturally talented is in assessing risk (e.g. choosing between playing a non-wild or a 10, unsure of whether or not the opponent has a 3). Making potentially risky choices like this in situations with imperfect information requires a reasonable system of inference, whether explicit (e.g. a probabilistic inference system) or implicit (policies acquired through Q-learning).
 \fs42 \
 \
 Schedule:\
 
-\fs36 	Phase I (week 1): During this phase of the project, we intend to fully implement the game environment. This will involve constructing a simple, functional GUI for the human player as well as implementing a default agent that will select actions randomly. Completion of this phase of the project will allow a human player to play an entire game of realistic Scheisskopf against a randomly-acting opponent. We intend to use the Tkinter package, in addition to code snippets found online, for implementing our program\'92s GUI. \
+\fs36 	Phase I (week 1): During this phase of the project, we intend to fully implement the game environment. This will involve constructing a simple, functional GUI for the human player as well as implementing a default agent that will select actions randomly. Completion of this phase of the project will allow a human player to play an entire game of realistic Scheisskopf against a randomly-acting opponent. We intend to use the Tkinter package (a general purpose Python GUI) for implementing our program\'92s GUI. \
 \
 	Phase II (week 2): During this phase, we intend to implement and test both a Q-learner and a reflex agent. The reflex agent will rank actions based on a series of well-defined, reasonably simple heuristics that match our intuitions as amateur-expert players of Scheisskopf. The Q-learner will be trained against this reflex agent. Because of the massive state space of most card games (Scheisskopf included), we will have to featurize our states in order to pose a tractable Q-learning problem. Ideas for helpful features include:\
-	-Cards in opponent\'92s hand\
-	-Cards in agent\'92s hand\
+	-# of cards in opponent\'92s hand\
+	-# of cards in agent\'92s hand\
+	-# of wilds in opponent\'92s hand\
+	-# of wilds in agent\'92s hand\
 	-Size of pile\
 \
 	Phase III (week 3): During this phase, we hope to improve upon our agent, possibly by exploring alternative learning algorithms, fine tuning the featurization of states, or by incorporating certain heuristics into the learning agent\'92s strategy. It is during this time that we hope to perform assessment of various strategies to show that, in fact, our finalized agent plays respectably.
 \fs42 \
 \
 Assessment:\
-
-\fs36 	Each model will be assessed relative to the performance of a random agent. That is, a single human player will play some number of games (perhaps 10) against an agent, and the agent\'92s average winning rate will be computed from these trials. It is our expectation that the performance of the random agent should be quite low (hopefully less than 0.5) when playing against a reasonably practiced human player. We hope to develop a system that performs significantly better than the random agent. Ideally, our agent would be able to win against a skilled human player well over half the time. Because there are certainly components of each Scheisskopf game that are ultimately up to chance (which player draws wild cards, which cards are down cards), it is only reasonable to assume that there will be an upper bound on the performance of our agent.
-\fs42 \
+\
 \
 \
 }

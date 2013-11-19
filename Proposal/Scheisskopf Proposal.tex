@@ -1,0 +1,135 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LaTeX Example: Project Report
+%
+% Source: http://www.howtotex.com
+%
+% Feel free to distribute this example, but please keep the referral
+% to howtotex.com
+% Date: March 2011 
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% How to use writeLaTeX: 
+%
+% You edit the source code here on the left, and the preview on the
+% right shows you the result within a few seconds.
+%
+% Bookmark this page and share the URL with your co-authors. They can
+% edit at the same time!
+%
+% You can upload figures, bibliographies, custom classes and
+% styles using the files menu.
+%
+% If you're new to LaTeX, the wikibook is a great place to start:
+% http://en.wikibooks.org/wiki/LaTeX
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Edit the title below to update the display in My Documents
+%\title{Project Report}
+%
+%%% Preamble
+\documentclass[paper=a4, fontsize=11pt]{scrartcl}
+\usepackage[T1]{fontenc}
+\usepackage{fourier}
+
+\usepackage[english]{babel}															% English language/hyphenation
+\usepackage[protrusion=true,expansion=true]{microtype}	
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage[pdftex]{graphicx}	
+\usepackage{url}
+
+
+%%% Custom sectioning
+\usepackage{sectsty}
+\allsectionsfont{\centering \normalfont\scshape}
+
+
+%%% Custom headers/footers (fancyhdr package)
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhead{}											% No page header
+\fancyfoot[L]{}											% Empty 
+\fancyfoot[C]{}											% Empty
+\fancyfoot[R]{\thepage}									% Pagenumbering
+\renewcommand{\headrulewidth}{0pt}			% Remove header underlines
+\renewcommand{\footrulewidth}{0pt}				% Remove footer underlines
+\setlength{\headheight}{13.6pt}
+
+
+%%% Equation and float numbering
+\numberwithin{equation}{section}		% Equationnumbering: section.eq#
+\numberwithin{figure}{section}			% Figurenumbering: section.fig#
+\numberwithin{table}{section}				% Tablenumbering: section.tab#
+
+
+%%% Maketitle metadata
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} 	% Horizontal rule
+
+\title{
+		%\vspace{-1in} 	
+		\usefont{OT1}{bch}{b}{n}
+		\normalfont \normalsize \textsc{Williams College \\ Computer Science 373} \\ [25pt]
+		\horrule{0.5pt} \\[0.4cm]
+		\huge Proposal: Learning of a Competitive Strategy in Scheisskopf \\
+		\horrule{2pt} \\[0.5cm]
+}
+\author{
+\normalfont 								
+\normalsize Nile Livingston \\ 
+\normalsize Rohan Paranjpe \\ 
+\normalsize
+\today
+}
+\date{}
+
+
+%%% Begin document
+\begin{document}
+\maketitle
+\section{Introduction}
+Scheisskopf is a card game intended for 2 or more players. Despite notable effects of chance in the configuration of the deck, competitive strategies are nontrivial and require attention to nonlocal constraints. This matter is complicated further by the fact that each player possesses imperfect information about the location of cards in the deck. Our goal is to develop an agent that can learn to play competitively against a human opponent in a two-player version of the game.
+
+\section{Rules of Scheisskopf (two player variation)}
+
+\subsection{Dealing and Pre-game}
+Each player is dealt three cards face down, three cards face up, and a three card hand. The remaining cards form the deck. In the pre-game round, the players are allowed to swap cards in their hand with their up cards. The first player to finish swapping may then play a card, upon which all players must cease swapping and normal turn-taking begins. 
+	
+\subsection{Taking Your Turn}
+A normal turn is as follows: the card(s) most recently played form the top of the pile. Let the card on top of the pile be of rank $X$. For most $X$ (4, 5, 6, 8, 9, J, Q, K, A), the player taking her turn must play at least one card from her hand of rank $Y \geq X$. The exception to this rule is $X=7$, upon which the player must play card(s) of rank $Y \leq 7$. Wild cards may be played on cards of any rank $X$. At the end of a turn, the player must draw exactly as many cards from the deck as needed to have 3 in their hand (if the player already has 3 or more cards in her hand, she does not draw). If the player draws card(s) of rank equal to the rank she just played, she may quickly play these before the opponent plays. If the player cannot play any cards, she must pick up the pile into her hand and her turn is over. On the other hand, if the player can play, she must; one may not elect to pick up the pile. A player's up cards are unplayable until both her hand and the deck are empty. Similarly, a player's bottom cards are unplayable until both her hand and up cards are exhausted. Down cards must be played one at a time and without looking at the card before playing it. Multiple up cards of the same rank may be played simultaneously. If, at any point, all four cards of a rank are played, the pile is discarded and the player who completed the set is allowed to play again. 
+	
+\subsection{Endgame}
+The goal of each player is to be the first to play all of her cards. This means exhausting the deck, one's hand, one's up cards, and successfully playing all of one's down cards (i.e. if a down card is played that is not playable given the current up card, the player must pick up the deck into her previously empty hand). 
+	
+\subsection{Card Ordering}
+The rank ordering of the non-wild cards is as follows: $4 < 5 < 6 < 7< 8 < 9 < J < Q < K < A$. 
+	
+\subsection{Wilds}
+2's, 3's, and 10's are wild. 2's do nothing special, 3's force the opponent to pick up the pile into his/her hand (the 3 played is discarded rather than picked up by the opponent), and 10's discard the entire pile. Both 3's and 10's force the opponent to skip their turn. 
+
+\section{Challenges}
+\subsection{Imperfect Information}
+At any given point in the game, there are factors that are unknown to each player in the game. The contents and ordering of the deck, the unobserved contents of the opponents hand, and each player's down cards, are all unknown. In practice, this uncertainty extends to the contents of the discard pile and possibly most of the contents of the opponent's hand due to the limitations of memory for human players. A computer agent thus has the advantage of perfect memory of what it has seen; it may know the contents of the discard pile, as well as perhaps some of the opponent's hand. Where the computer agent is less naturally talented is in assessing risk (e.g. choosing between playing a non-wild or a 10, unsure of whether or not the opponent has a 3). Making potentially risky choices like this in situations with imperfect information requires a reasonable system of inference, whether explicit (e.g. a probabilistic inference system) or implicit (policies acquired through Q-learning).
+
+\subsection{Complexity of State Space}
+In most card games, the size of the state space (where each state is represented explicitly as the location of every card) is combinatorially massive. To put this idea into perspective relative to Scheisskopf, the number of possible dealing configurations is 
+
+\section{Methodology}
+
+\section{Implementation}
+
+Our implementation of the game environment and our agents will be in Python. We intend to use the Tkinter package to handle all GUI components of the project necessary for playability. We will maintain version control of our code and related files through a GitHub repository.
+
+\section{Schedule}
+
+\subsection{Phase I (week 1)}
+During this phase of the project, we intend to fully implement the game environment. This will involve constructing a simple, functional GUI for the human player as well as implementing a default agent that will select actions randomly. Completion of this phase of the project will allow a human player to play an entire game of realistic Scheisskopf against a randomly-acting opponent.
+
+\subsection{Phase II (week 2)}
+During this phase, we intend to implement and test both a Q-learner and a reflex agent. The reflex agent will rank actions based on a series of well-defined, reasonably simple heuristics that match our intuitions as amateur-expert players of Scheisskopf. The Q-learner will be trained against this reflex agent. Because of the massive state space problem discussed earlier, we will have to featurize our states in order to pose a tractable Q-learning problem. 
+
+\subsection{Phase III(week 3)}
+During this phase, we hope to improve upon our agent, possibly by exploring alternative learning algorithms, fine tuning the featurization of states, or by incorporating certain heuristics into the learning agent's strategy. It is during this time that we hope to perform assessment of various strategies to show that, in fact, our finalized agent plays respectably.
+
+\section{Assessment of Agent Performance}
+Each model will be assessed relative to the performance of a random agent. That is, a single human player will play some number of games (perhaps 10) against an agent, and the agentÕs average winning rate will be computed from these trials. We intend to have many amateur-expert human players compete against each agent in order to have a more accurate average performance. It is our expectation that the performance of the random agent should be quite low (hopefully less than 0.5) when playing against a reasonably practiced human player. We hope to develop a system that performs significantly better than the random agent. Ideally, our agent would be able to win against a skilled human player well over half the time. Because there are certainly components of each Scheisskopf game that are ultimately up to chance (which player draws wild cards, which cards are down cards), it is only reasonable to assume that there will be an upper bound on the performance of our agent.
+
+\end{document}
