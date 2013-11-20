@@ -10,7 +10,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % How to use writeLaTeX: 
 %
-% You edit the source code here on the left, and the preview on the
+% You edit the source code theire on the left, and the preview on the
 % right shows you the result within a few seconds.
 %
 % Bookmark this page and share the URL with your co-authors. They can
@@ -76,6 +76,7 @@
 \normalfont 								
 \normalsize Nile Livingston \\ 
 \normalsize Rohan Paranjpe \\ 
+\normalsize Julian Drobetsky \\
 \normalsize
 \today
 }
@@ -94,18 +95,18 @@ Scheisskopf is a card game intended for 2 or more players. Despite notable effec
 Cards are dealt from a shuffled standard deck with 4 suits and 13 ranks, a total of 52 cards. Each player is dealt three cards face down (\emph{down cards}), three cards face up (\emph{up cards}), and a three card \emph{hand}. The remaining cards form the \emph{deck}. In the \emph{pre-game} round, the players are allowed to swap cards in their hand with their up cards. The first player to finish swapping may then play a card, upon which all players must cease swapping and normal turn-taking begins. 
 	
 \subsection{Taking Your Turn}
-A normal turn is as follows: the card(s) most recently played form the top of the \emph{pile}. Let the card on top of the pile be of rank $X$. For most $X$ (4, 5, 6, 8, 9, J, Q, K, A), the player taking her turn must play at least one card from her hand of rank $Y \geq X$. The exception to this rule is $X=7$, upon which the player must play card(s) of rank $Y \leq 7$. Wild cards may be played on cards of any rank $X$. At the end of a turn, the player must draw exactly as many cards from the deck as needed to have 3 in their hand (if the player already has 3 or more cards in her hand, she does not draw). If the player draws card(s) of rank equal to the rank she just played, she may quickly play these before the opponent plays. 
+A normal turn is as follows: the card(s) most recently played form the top of the \emph{pile}. Let the card on top of the pile be of rank $X$. For most $X$ (4, 5, 6, 8, 9, J, Q, K, A), the player taking their turn must play at least one card from their hand of rank $Y \geq X$. The exception to this rule is $X=7$, upon which the player must play card(s) of rank $Y \leq 7$. Wild cards may be played on cards of any rank $X$. At the end of a turn, the player must draw exactly as many cards from the deck as needed to have 3 in their hand (if the player already has 3 or more cards in their hand, they do not draw). If the player draws card(s) of rank equal to the rank they just played, they may quickly play these before the opponent plays.
 
-If the player cannot play any cards, she must pick up the pile into her hand and her turn is over. On the other hand, if the player can play, she must; one may not elect to pick up the pile. Multiple up cards of the same rank may be played simultaneously. If, at any point, all four cards of a rank are stacked continuously in the pile, the pile is discarded and the player who completed the set is allowed to play again. A player's up cards are unplayable until both her hand and the deck are empty. Similarly, a player's bottom cards are unplayable until both her hand and up cards are exhausted. Down cards must be played one at a time and without looking at the card before playing it. 
+If the player cannot play any cards, they must pick up the pile into their hand and their turn is over. On the other hand, if the player can play, they must; one may not elect to pick up the pile. Multiple up cards of the same rank may be played simultaneously. If, at any point, all four cards of a rank are stacked continuously in the pile, the pile is discarded and the player who completed the set is allowed to play again. At any point after the pile is discarded (and thus empty), a card of any rank may be played by the next player. A player's up cards are unplayable until both their hand and the deck are empty. Similarly, a player's down cards are unplayable until both their hand and up cards are exhausted. Down cards must be played one at a time and without looking at the card before playing it. 
 	
 \subsection{Endgame}
-The goal of each player is to be the first to play all of her cards. This means exhausting the deck, one's hand, one's up cards, and \emph{successfully} playing all of one's down cards (i.e. if a down card is played that is not playable on the current up card, the down card was played \emph{unsuccessfully} and the player must pick up the deck into her previously empty hand). 
+The goal of each player is to be the first to play all of their cards. This means exhausting the deck, one's hand, one's up cards, and \emph{successfully} playing all of one's down cards (i.e. if a down card is played that is not playable on the current up card, the down card was played \emph{unsuccessfully} and the player must pick up the deck into their previously empty hand). 
 	
 \subsection{Card Ordering}
 The rank ordering of the non-wild cards is as follows: $4 < 5 < 6 < 7< 8 < 9 < J < Q < K < A$. 
 	
 \subsection{Wilds}
-2's, 3's, and 10's are wild. 2's do nothing special, 3's force the opponent to pick up the pile into her hand (the 3 played is discarded rather than picked up by the opponent), and 10's discard the entire pile. Both 3's and 10's force the opponent to skip their turn. 
+2's, 3's, and 10's are wild. 2's do nothing special, 3's force the opponent to pick up the pile into their hand (the 3 played is discarded rather than picked up by the opponent), and 10's discard the entire pile. Both 3's and 10's force the opponent to skip their turn. 
 
 
 \section{Challenges to Modeling Competitive Play}
