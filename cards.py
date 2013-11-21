@@ -55,7 +55,7 @@ def next_hand(event):
         x += 90
  
 # change this to the directory your card GIFs are in
-image_dir = "/Users/nile323/Desktop/Current School Materials/CSCI 373/final_project/Cards_gif/"
+image_dir = "/Users/nile323/finalProject/Cards_gif/"
  
 # load a sample card to get the size
 photo1 = PhotoImage(file=image_dir+"C2.gif")
