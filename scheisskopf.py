@@ -4,14 +4,19 @@ import random
 # turn-taking and GameBoard manipulation.
 class Game:
 
+	# Construct players and GameBoard.
 	def __init__(self, playerOneHuman):
 		self.inPregame = True
-		self.playerOne = RandomAgent()
-		self.playerTwo = RandomAgent()
+		self.playerOne = RandomAgent(1)
+		self.playerTwo = RandomAgent(2)
+		self.agentIDs = [1, 2]
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = GameBoard(self.players)
 		self.activePlayer = self.playerOne
+
+	def getGameBoard(self):
+		return self.gameBoard
 
 	# Moves the game forward a single turn and change activePlayer.
 	def takeTurn(self):
@@ -93,7 +98,7 @@ class GameBoard:
 
 		# Dict with mappings player:set
 		self.hands = dict()		
-		# Dicts with mappings player:list
+		# Dicts with mappings agentID:list
 		self.upCards = dict()		
 		self.downCards = dict()
 
@@ -107,21 +112,58 @@ class GameBoard:
 		self.deck.pushList(tempDeck)	
 
 		for player in self.players:
+			ID = player.getID()
 			# Draw 3 down cards for the player.
+			self.downCards[ID] = []
 			for i in range(1, 4):
-				self.downCards[player].append(self.deck.pop())
+				self.downCards[ID].append(self.deck.pop())
 
+			self.upCards[ID] = []
 			# Draw 3 up cards for the player.
 			for i in range(1, 4):
-				self.upCards[player].append(self.deck.pop())
+				self.upCards[ID].append(self.deck.pop())
 
+			self.hands[ID] = set()
 			# Draw a 3-card hand for the player.
 			for i in range(1, 4):
-				self.hands[player].add(self.deck.pop())
+				self.hands[ID].add(self.deck.pop())
 
 	# For debugging.
 	def deckToString(self):
-		return self.deck.toString()
+		return "Deck: " + self.deck.toString()
+
+	def handsToString(self):
+		output = "Hands: "
+		for player in self.players:
+			ID = player.getID()
+			hand = self.hands[ID]
+			output += "("
+			for card in hand:
+				output += card.toString() + " "
+			output += ") "
+		return output
+
+	def upCardsToString(self):
+		output = "Up cards: "
+		for player in self.players:
+			ID = player.getID()
+			upCards = self.upCards[ID]
+			output += "("
+			for card in upCards:
+				output += card.toString() + " "
+			output += ") "
+		return output
+
+	def downCardsToString(self):
+		output = "Down cards: "
+		for player in self.players:
+			ID = player.getID()
+			downCards = self.downCards[ID]
+			output += "("
+			for card in downCards:
+				output += card.toString() + " "
+			output += ") "
+		return output
 
 	# Returns True iff game is over.
 	def isTerminal(self):
@@ -307,7 +349,8 @@ class Stack:
 # An agent that randomly chooses actions.
 class RandomAgent:
 
-	def __init__(self):
+	def __init__(self, agentID):
+		self.agentID = agentID
 		self.pileRep = Stack()	# Internal representation of the pile.
 		self.discardPileRep = {}	# Internal representation of the discard pile.
 		self.opponentHandRep = {}	# Internal representation of the opponent's hand.
@@ -321,6 +364,9 @@ class RandomAgent:
 		self.opponentPickedUpPile = 2
 		self.unsuccessfulPlay = 5
 		self.opponentUnsuccessfulPlay = 6
+
+	def getID(self):
+		return self.agentID
 
 	# Randomly chooses a legal action.
 	def chooseHandCard(self, hand, upCards, playableCards):
@@ -348,5 +394,8 @@ class RandomAgent:
 if __name__ == '__main__':
 
 	game = Game(True)
-	print board.deckToString()
-
+	gameBoard = game.getGameBoard()
+	print gameBoard.deckToString()
+	print gameBoard.handsToString()
+	print gameBoard.upCardsToString()
+	print gameBoard.downCardsToString()
