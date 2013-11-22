@@ -61,7 +61,7 @@ class Game:
 				self.downCardPlay()
 
 			# Up cards are available for player.
-			elif gameBoard.viewHand == {}:
+			elif gameBoard.viewHand(self.activePlayer) == []:
 				self.upCardPlay()
 
 			# Player still has a hand to play.
@@ -105,9 +105,13 @@ class Game:
 	def downCardPlay(self):
 		# Select a down card and put it on the pile.
 		self.activePlayer.chooseDownCard()	
-		index = random.choice(range(0, len(self.gameBoard.downCards(self.activePlayer))))
+		numDownCards = len(self.gameBoard.viewDownCards(self.activePlayer))
+		indexList = []
+		for i in range(0, numDownCards):
+			indexList.append(i)
+		index = random.choice(indexList)
 		downCard = self.gameBoard.downCards.pop(index)
-		self.gameBoard.downCardToPile(downCard)
+		self.gameBoard.downCardToPile(self.activePlayer, downCard)
 				
 		# If the card is not playable on the pile, pick it all up.
 		if not downCard.isPlayableOn(self.pileCard):
@@ -116,12 +120,13 @@ class Game:
 
 	# Handles the playing of an up card.
 	def upCardPlay(self):
+		upCards = self.gameBoard.viewUpCards(self.activePlayer)
 		playableCards = self.gameBoard.getPlayableUpCards(self.activePlayer)
-		action = self.activePlayer.chooseUpCard(playableCards)
+		action = self.activePlayer.chooseUpCard(upCards, playableCards)
 		# Make sure a null action is true. If so, pick up pile.
 		if action == []:
 			if playableCards == []:
-				pileToHand(self.activePlayer)
+				self.gameBoard.pileToHand(self.activePlayer)
 			else:
 				return
 
@@ -131,7 +136,7 @@ class Game:
 			if not card.isPlayableOn(self.pileCard):
 				return
 			# If all valid, push to pile.
-		self.gameBoard.handToPile(self.activePlayer, action)
+		self.gameBoard.upCardsToPile(self.activePlayer, action)
 		self.changeActivePlayer()
 
 	# Handles the playing of hand cards.
@@ -267,7 +272,7 @@ class GameBoard:
 		return list(self.upCards[player.getID()])
 
 	# Returns a copy of the player's down cards.
-	def downCards(self, player):
+	def viewDownCards(self, player):
 		return list(self.downCards[player.getID()])
 
 	# Returns a list of legal hand cards for an agent. [] implies no legal hand cards.
@@ -283,7 +288,7 @@ class GameBoard:
 	def getPlayableUpCards(self, player):
 		playableCards = []
 		pileCard = self.pile.peek()
-		for card in self.upCards[player.get()]:
+		for card in self.upCards[player.getID()]:
 			if card.isPlayableOn(pileCard):
 				playableCards.append(card)
 		return playableCards
@@ -318,6 +323,7 @@ class GameBoard:
 
 	# Places a single down card on the pile.
 	def downCardToPile(self, player, card):
+		print self.downCards
 		downCards = self.downCards[player.getID()]
 		downCards.remove(card)
 		self.pile.push(card)
@@ -343,7 +349,7 @@ class GameBoard:
 		upCards.append(handSwap)
 
 	def draw(self, player):
-		if self.deck == []:
+		if self.deck.isEmpty():
 			return
 		hand = self.hands[player.getID()]
 		cardsToDraw = 3 - len(hand)
@@ -451,7 +457,8 @@ class Stack:
 
 	# Removes the topmost element from the stack and returns it.
 	def pop(self):
-		return self.list.pop()
+		if not self.list == []:
+			return self.list.pop()
 
 	# Adds item to the stack, making it the new topmost element.
 	def push(self, item):
