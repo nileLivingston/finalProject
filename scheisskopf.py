@@ -9,7 +9,6 @@ class Game:
 		self.inPregame = True
 		self.playerOne = RandomAgent(1)
 		self.playerTwo = RandomAgent(2)
-		self.agentIDs = [1, 2]
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = GameBoard(self.players)
@@ -23,7 +22,21 @@ class Game:
 		# If we're in the pregame, take turns swapping.
 		if self.inPregame:
 			swap = self.activePlayer.chooseSwap()
-			
+
+			# Check to see if swap is the first normal turn.
+			if len(swap) == 1:
+
+
+			# Check legality of swap and apply if necessary.
+			else:
+				upCard = swap[0]
+				handCard = swap[1]
+				if self.gameBoard.isLegalSwap(activePlayer):
+					gameBoard.applySwap()
+					# Send percepts to all players.
+					for player in self.players:
+
+					return
 
 		# If we're doing normal turn taking, make activePlayer take a turn.	
 		else:
@@ -31,60 +44,75 @@ class Game:
 			
 			# Down cards are available for player. No need to actually choose; random anyway.
 			if gameBoard.viewUpCards(activePlayer) == [] and gameBoard.viewHand(activePlayer) == {}:
-				# Select a down card and put it on the pile.
-				activePlayer.chooseDownCard()	
-				index = random.choice(range(0, len(gameBoard.downCards(activePlayer))))
-				downCard = gameBoard.downCards.pop(index)
-				gameBoard.downCardToPile(downCard)
-				
-				# If the card is not playable on the pile, pick it all up.
-				if not downCard.isPlayableOn(pileCard):
-					gameBoard.pileToHand(activePlayer)
+				downCardPlay(activePlayer, pileCard)
+				return
 
 			# Up cards are available for player.
 			elif gameBoard.viewHand == {}:
-				playableCards = gameBoard.getPlayableUpCards(self.activePlayer)
-				action = activePlayer.chooseUpCard(playableCards)
-				# Make sure a null action is true. If so, pick up pile.
-				if action == []:
-					if playableCards == []:
-						pileToHand(activePlayer)
-					else:
-						return
-
-				# Check to see if action is valid. If so, play cards.
-				for card in action:
-					# Invalid move: reject.
-					if not card.isPlayableOn(pileCard):
-						return
-				# If all valid, push to pile.
-				gameBoard.handToPile(player, action)
+				upCardPlay(activePlayer, pileCard)
+				return
 
 			# Player still has a hand to play.
 			else:
-				playableCards = gameBoard.getPlayableHandCards(self.activePlayer)
-				action = activePlayer.chooseHandCard(playableCards)
-				# Make sure a null action is true. If so, pick up the pile.
-				if action == []:
-					if playableCards == []:
-						pileToHand(activePlayer)
-					else:
-						return
-
-				# Check to see if action is valid. If so, play cards.
-				for card in action:
-					# Invalid move: reject.
-					if not card.isPlayableOn(pileCard):
-						return
-				# If all valid, push to pile.
-				gameBoard.handToPile(player, action)
-
+				handCardsPlay(activePlayer, pileCard)
+				return
 
 		# Hand over turn-taking control.
 		if self.activePlayer == self.playerOne:
 			self.activePlayer = self.playerTwo
 		else:
 			self.activePlayer = self.playerOne
+
+	# Handles the playing of a down card.
+	def downCardPlay(self, activePlayer, pileCard):
+		# Select a down card and put it on the pile.
+		activePlayer.chooseDownCard()	
+		index = random.choice(range(0, len(self.gameBoard.downCards(activePlayer))))
+		downCard = self.gameBoard.downCards.pop(index)
+		self.gameBoard.downCardToPile(downCard)
+				
+		# If the card is not playable on the pile, pick it all up.
+		if not downCard.isPlayableOn(pileCard):
+			self.gameBoard.pileToHand(activePlayer)
+
+	# Handles the playing of an up card.
+	def upCardPlay(self, activePlayer, pileCard):
+		playableCards = self.gameBoard.getPlayableUpCards(self.activePlayer)
+		action = activePlayer.chooseUpCard(playableCards)
+		# Make sure a null action is true. If so, pick up pile.
+		if action == []:
+			if playableCards == []:
+				pileToHand(activePlayer)
+			else:
+				return
+
+		# Check to see if action is valid. If so, play cards.
+		for card in action:
+			# Invalid move: reject.
+			if not card.isPlayableOn(pileCard):
+				return
+			# If all valid, push to pile.
+		self.gameBoard.handToPile(player, action)
+
+	# Handles the playing of hand cards.
+	def handCardsPlay(self, activePlayer, pileCard):
+		playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
+		action = activePlayer.chooseHandCard(playableCards)
+		# Make sure a null action is true. If so, pick up the pile.
+		if action == []:
+			if playableCards == []:
+				pileToHand(activePlayer)
+			else:
+				return
+
+		# Check to see if action is valid. If so, play cards.
+		for card in action:
+			# Invalid move: reject.
+			if not card.isPlayableOn(pileCard):
+				return
+		# If all valid, push to pile.
+		self.gameBoard.handToPile(player, action)
+		return
 
 
 # Represents a configuration of the cards on the table and in players' hands.
@@ -128,7 +156,9 @@ class GameBoard:
 			for i in range(1, 4):
 				self.hands[ID].add(self.deck.pop())
 
-	# For debugging.
+	# TOSTRING() METHODS ARE TEMPORARY!
+	# After we get the GUI up and running, we can
+	# cut these.
 	def deckToString(self):
 		return "Deck: " + self.deck.toString()
 
@@ -195,7 +225,7 @@ class GameBoard:
 	def getPlayableHandCards(self, player):
 		playableCards = []
 		pileCard = self.pile.peek()
-		for card in self.hands[player]:
+		for card in self.hands[player.getID()]:
 			if card.isPlayableOn(pileCard):
 				playableCards.append(card)
 		return playableCards
@@ -204,7 +234,7 @@ class GameBoard:
 	def getPlayableUpCards(self, player):
 		playableCards = []
 		pileCard = self.pile.peek()
-		for card in self.upCards[player]:
+		for card in self.upCards[player.get()]:
 			if card.isPlayableOn(pileCard):
 				playableCards.append(card)
 		return playableCards
@@ -216,27 +246,28 @@ class GameBoard:
 
 	# Places cards from an players's hand into the pile.
 	def handToPile(self, player, cardList):
-		hand = self.hands[player]
+		hand = self.hands[player.getID()]
 		for card in cardList:
 			hand.remove(card)
 			self.pile.push(card)
 
 	# Places cards from the pile into the agent's hand.
 	def pileToHand(self, player):
-		hand = self.hands[player]
+		hand = self.hands[player.getID()]
 		while not self.pile.isEmpty():
 			card = self.pile.pop()
 			hand.add(card)
 
 	# Places cards from the player's up cards into the pile.
 	def upCardsToPile(self, player, cardList):
-		upCards = self.upCards[player]
+		upCards = self.upCards[player.getID()]
 		for card in cardList:
 			upCards.remove(card)
 			self.pile.push(card)
 
+	# Places a single down card on the pile.
 	def downCardToPile(self, player, card):
-		downCards = self.downCards[player]
+		downCards = self.downCards[player.getID()]
 		downCards.remove(card)
 		self.pile.push(card)
 
@@ -247,6 +278,16 @@ class GameBoard:
 			card = self.pile.pop()
 			discard.push(card)
 		self.discard.push(topCard)
+
+	# Applies a swap. 
+	def applySwap((upSwap, handSwap), player):
+		ID = player.getID()
+		upCards = self.upCards[ID]
+		hand = self.hands[ID]
+		upCards.remove(upSwap)
+		hand.add(upSwap)
+		hand.remove(handSwap)
+		upCards.append()
 
 # Represents a single card object with rank, suit, and wildness.
 class Card:
@@ -268,11 +309,10 @@ class Card:
 	def isWild(self):
 		return self.wild
 
-	# Returns a String representation of the card.
+	# TOSTRING METHOD IS TEMPORARY!
+	# Once we get the GUI up and running, we
+	# can cut this. 
 	def toString(self):
-
-		# This translation nonsense is only important if we're printing cards
-		# in Terminal. Once we get the GUI up and running, we might cut this.
 		translatedRank = ""
 		if self.rank == 11:
 			translatedRank = "J"
@@ -381,9 +421,14 @@ class RandomAgent:
 		return
 
 	# Randomly chooses a legal swap or to begin turn-taking.
+	# Legal swaps are represented as (upCard, handCard) tuples.
+	# If we want to play a card, return...?
 	def chooseSwap(self, hand, topCards):
 		hand = gameBoard.viewhand(self.agentID)
-		topCards = gameBoard.viewTopCards()
+		upCards = gameBoard.viewUpCards()
+		upSwap = random.choose(upCards)
+		handSwap = random.choose(hand)
+		return (upSwap, handSwap)
 
 	# Update knowledge based on percept.
 	def updateKnowledge(self, perceptType, cardList=None):
