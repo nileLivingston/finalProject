@@ -14,6 +14,8 @@ class Game:
 		self.gameBoard = GameBoard(self.players)
 		self.activePlayer = self.playerOne
 		self.pileCard = None
+		self.ended = False
+		self.winner = None
 
 	# Prints the current state of the game.
 	def snapshot(self):
@@ -32,8 +34,22 @@ class Game:
 	def getActivePlayer(self):
 		return self.activePlayer.getID()
 
+	def isEnded(self):
+		return self.ended
+
+	def getWinner(self):
+		return self.winner
+
 	# Moves the game forward a single turn and change activePlayer.
 	def takeTurn(self):
+		# Check to see if the game is ended.
+		if self.gameBoard.isTerminal():
+			self.ended = True
+			self.changeActivePlayer()
+			self.winner = self.activePlayer.getID()
+			#print "Player " + str(self.activePlayer.getID()) + " wins!"	
+			return
+
 		# If we're in the pregame, prompt swap from activePlayer.
 		self.pileCard = gameBoard.peekPile()
 		
@@ -110,7 +126,7 @@ class Game:
 		for i in range(0, numDownCards):
 			indexList.append(i)
 		index = random.choice(indexList)
-		downCard = self.gameBoard.downCards.pop(index)
+		downCard = self.gameBoard.viewDownCards(self.activePlayer).pop(index)
 		self.gameBoard.downCardToPile(self.activePlayer, downCard)
 				
 		# If the card is not playable on the pile, pick it all up.
@@ -252,7 +268,7 @@ class GameBoard:
 	# Returns True iff game is over.
 	def isTerminal(self):
 		for player in self.players:
-			if self.downCards[player] == {}:
+			if self.downCards[player.getID()] == [] and self.hands[player.getID()] == []:
 				return True
 
 	# Returns the card on top of the pile.
@@ -323,7 +339,6 @@ class GameBoard:
 
 	# Places a single down card on the pile.
 	def downCardToPile(self, player, card):
-		print self.downCards
 		downCards = self.downCards[player.getID()]
 		downCards.remove(card)
 		self.pile.push(card)
@@ -355,6 +370,8 @@ class GameBoard:
 		cardsToDraw = 3 - len(hand)
 		if cardsToDraw > 0 and not self.deck.isEmpty():
 			for i in range(0, cardsToDraw):
+				if self.deck.isEmpty():
+					return
 				card = self.deck.pop()
 				hand.append(card)
 
@@ -598,7 +615,7 @@ class ReflexAgent:
 		bestHandCard = self.bestCardInList(hand)
 		worstUpCard = self.worstCardInList(upCards)
 		# If there are no more productive swaps, play lowest card(s).
-		if not bestHandCard.isBetterThan(worstCard):
+		if not bestHandCard.isBetterThan(worstUpCard):
 			worstHandCards = self.worstCardInList(playableCards)
 			return (None, worstHandCards)
 		
@@ -642,12 +659,23 @@ class ReflexAgent:
 # Main method used for testing.
 if __name__ == '__main__':
 
-	game = Game(True)
-	gameBoard = game.getGameBoard()
+	wins = [0, 0]
+	trials = 10
+	for i in range(0, trials):
+		print "Running game " + str(i)
+		game = Game(True)
+		gameBoard = game.getGameBoard()
 	
-	game.snapshot()
-	for i in range(0, 500):
-		game.takeTurn()
-		game.snapshot()
+		#game.snapshot()
+		while not game.isEnded():
+			game.takeTurn()
+			#game.snapshot()
+		winner = game.getWinner()
+		wins[winner-1] += 1
+
+	winrates = [wins[0]/float(trials),wins[1]/float(trials)]
+	print "Win rates: " + str(winrates)
+
+
 
 
