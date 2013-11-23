@@ -8,7 +8,7 @@ class Game:
 	def __init__(self, playerOneHuman):
 		self.inPregame = True
 		self.playerOne = RandomAgent(1)
-		self.playerTwo = ReflexAgent(2)
+		self.playerTwo = GreedyAgent(2)
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = GameBoard(self.players)
@@ -50,11 +50,11 @@ class Game:
 			#print "Player " + str(self.activePlayer.getID()) + " wins!"	
 			return
 
-		# If we're in the pregame, prompt swap from activePlayer.
 		self.pileCard = gameBoard.peekPile()
 		
+		
 		# If there's a ten on the pile, clear and skip activePlayer's turn.
-		if not self.pileCard == None and self.pileCard.getRank() == 10:
+		if not self.pileCard == None and (self.pileCard.getRank() == 10 or gameBoard.topFourSame()):
 			gameBoard.clearPile()
 			self.changeActivePlayer()
 			return
@@ -67,6 +67,7 @@ class Game:
 			self.changeActivePlayer()
 			return
 
+		# If we're in the pregame, prompt swap from activePlayer.
 		if self.inPregame:
 			self.swapPlay()
 
@@ -270,6 +271,27 @@ class GameBoard:
 		for player in self.players:
 			if self.downCards[player.getID()] == [] and self.hands[player.getID()] == []:
 				return True
+
+	# Returns true iff the top four cards of the pile are the same.
+	def topFourSame(self):
+		if self.pile.size() < 4:
+			return False
+		output = True
+		temp = Stack()
+		card = self.pile.pop()
+		temp.push(card)
+		oldRank = card.getRank()
+		for i in range(1, 4):
+			card = self.pile.pop()
+			temp.push(card)
+			rank = card.getRank()
+			if not rank == oldRank:
+				output = False
+				break
+		while not temp.isEmpty():
+			card = temp.pop()
+			self.pile.push(card)
+		return output
 
 	# Returns the card on top of the pile.
 	def peekPile(self):
@@ -568,7 +590,7 @@ class RandomAgent:
 	def updateKnowledge(self, perceptType, cardList=None):
 		return
 
-class ReflexAgent:
+class GreedyAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
@@ -661,17 +683,19 @@ if __name__ == '__main__':
 
 	wins = [0, 0]
 	trials = 10
-	for i in range(0, trials):
-		print "Running game " + str(i)
+	for i in range(1, trials+1):
 		game = Game(True)
 		gameBoard = game.getGameBoard()
 	
-		#game.snapshot()
+		if trials == 1:
+			game.snapshot()
 		while not game.isEnded():
 			game.takeTurn()
-			#game.snapshot()
+			if trials == 1:
+				game.snapshot()
 		winner = game.getWinner()
 		wins[winner-1] += 1
+		print "Game " + str(i) + ": Player " + str(winner)
 
 	winrates = [wins[0]/float(trials),wins[1]/float(trials)]
 	print "Win rates: " + str(winrates)
