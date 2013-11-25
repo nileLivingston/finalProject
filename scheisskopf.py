@@ -8,7 +8,7 @@ class Game:
 	def __init__(self, playerOneHuman):
 		self.inPregame = True
 		self.playerOne = RandomAgent(1)
-		self.playerTwo = RandomAgent(2)
+		self.playerTwo = GreedyAgent(2)
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = GameBoard(self.players)
@@ -146,6 +146,7 @@ class Game:
 		if action == []:
 			if playableCards == []:
 				self.gameBoard.pileToHand(self.activePlayer)
+				self.changeActivePlayer()
 			else:
 				return
 
@@ -165,6 +166,7 @@ class Game:
 		if action == []:
 			if playableCards == []:
 				self.gameBoard.pileToHand(self.activePlayer)
+				self.changeActivePlayer()
 			else:
 				return
 
@@ -637,7 +639,8 @@ class RandomAgent:
 			return []
 		else:
 			rank = random.choice(playableCards).getRank()
-			cardsToPlay = self.getAllOfRank(rank, playableCards)
+			#cardsToPlay = self.getAllOfRank(rank, playableCards)
+			cardsToPlay = self.getSomeOfRank(rank, playableCards)
 			return cardsToPlay
 
 	# Choose legal up card(s) to play.
@@ -646,7 +649,8 @@ class RandomAgent:
 			return []
 		else:
 			rank = random.choice(playableCards).getRank()
-			cardsToPlay = self.getAllOfRank(rank, playableCards)
+			#cardsToPlay = self.getAllOfRank(rank, playableCards)
+			cardsToPlay = self.getSomeOfRank(rank, playableCards)
 			return cardsToPlay
 
 	# Trivial; return.
@@ -658,6 +662,14 @@ class RandomAgent:
 		output = []
 		for card in playableCards:
 			if card.getRank() == rank:
+				output.append(card)
+		return output
+
+	def getSomeOfRank(self, rank, playableCards):
+		output = []
+		for card in playableCards:
+			choice = random.choice([0, 1])
+			if choice == 1:
 				output.append(card)
 		return output
 
@@ -759,24 +771,59 @@ class GreedyAgent:
 # Main method used for testing.
 if __name__ == '__main__':
 
-	wins = [0, 0]
-	trials = 10
+	wins = [0, 0, 0]
+	trials = 100
+	numTurns = []
+	printTrials = False
+	threshold = 100000
 	for i in range(1, trials+1):
+		turns = 0
 		game = Game(False)
 		gameBoard = game.getGameBoard()
 	
-		if trials == 1:
+		if printTrials:
 			game.snapshot()
 		while not game.isEnded():
+			if turns > threshold:
+				break
 			game.takeTurn()
-			if trials == 1:
+			turns += 1
+			if printTrials:
 				game.snapshot()
 		winner = game.getWinner()
-		wins[winner-1] += 1
-		print "Game " + str(i) + ": Player " + str(winner)
+		if winner == None:
+			print "Game " + str(i) + ": Draw"
+			wins[0] += 1
+		else:
+			print "Game " + str(i) + ": Player " + str(winner)
+			wins[winner] += 1
+		numTurns.append(turns)
 
-	winrates = [wins[0]/float(trials),wins[1]/float(trials)]
-	print "Win rates: " + str(winrates)
+	#winrates = [wins[0]/float(trials),wins[1]/float(trials), wins[2]/float(trials)]
+	print "\n"
+	print "##############################"
+	print "SUMMARY STATISTICS:"
+	print "##############################"
+	print "Number of games: " + str(trials)
+	print "Draw threshold: " + str(threshold)
+	print "\n"
+	print "Draw rate: " + str(wins[0]/float(trials))
+	player1WinRate =  wins[1]/float(trials)
+	player2WinRate = wins[2]/float(trials)
+	print "Player 1 win rate: " + str(player1WinRate)
+	print "Player 2 win rate: " + str(player2WinRate)
+	print "\n"
+	print "Least number of turns: " + str(min(numTurns))
+	print "Greatest number of turns: " + str(max(numTurns))
+	print "Average number of turns: " + str(sum(numTurns)/len(numTurns))
+	numTurns.sort()
+	if trials%2 == 0:
+		index = int((float(trials)/2) - 1)
+		median = (numTurns[index] + numTurns[index+1])/float(2)
+	else:
+		index = int((float(trials)/2))
+		median = numTurns[index]
+	print "Median number of turns: " + str(median)
 
 
 
