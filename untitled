@@ -7,12 +7,12 @@ class Game:
 	# Construct players and GameBoard.
 	def __init__(self, playerOneHuman):
 		self.inPregame = True
-		self.playerOne = RandomAgent(1)
-		self.playerTwo = RandomAgent(2)
+		self.playerOne = GreedyAgent(1)
+		self.playerTwo = GreedyAgent(2)
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = GameBoard(self.players)
-		self.activePlayer = random.choice(self.players)
+		self.activePlayer = self.playerOne
 		self.pileCard = None
 		self.ended = False
 		self.winner = None
@@ -28,19 +28,15 @@ class Game:
 		print "Player: " + str(self.activePlayer.getID())
 		print "\n"
 
-	# Returns the GameBoard.
 	def getGameBoard(self):
 		return self.gameBoard
 
-	# Returns the ID of the active player.
 	def getActivePlayer(self):
 		return self.activePlayer.getID()
 
-	# True iff game is over.
 	def isEnded(self):
 		return self.ended
 
-	# Returns the winner of the game.
 	def getWinner(self):
 		return self.winner
 
@@ -50,11 +46,12 @@ class Game:
 		if self.gameBoard.isTerminal():
 			self.ended = True
 			self.changeActivePlayer()
-			self.winner = self.activePlayer.getID()	
+			self.winner = self.activePlayer.getID()
+			#print "Player " + str(self.activePlayer.getID()) + " wins!"	
 			return
 
-		# Look at the card on top of the pile.
 		self.pileCard = gameBoard.peekPile()
+		
 		
 		# If there's a ten on the pile, clear and skip activePlayer's turn.
 		if not self.pileCard == None and (self.pileCard.getRank() == 10 or gameBoard.topFourSame()):
@@ -77,11 +74,11 @@ class Game:
 		# If we're doing normal turn taking, make activePlayer take a turn.	
 		else:
 			# Down cards are available for player. No need to actually choose; random anyway.
-			if gameBoard.downCardsPlayable(self.activePlayer.getID()):
+			if gameBoard.viewUpCards(self.activePlayer) == [] and gameBoard.viewHand(self.activePlayer) == []:
 				self.downCardPlay()
 
 			# Up cards are available for player.
-			elif gameBoard.upCardsPlayable(self.activePlayer.getID()):
+			elif gameBoard.viewHand(self.activePlayer) == []:
 				self.upCardPlay()
 
 			# Player still has a hand to play.
@@ -103,22 +100,23 @@ class Game:
 		playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
 		swap = self.activePlayer.chooseSwap(hand, upCards, playableCards)
 		# Check to see if swap is actually a request to play.
-		# If so, submit that action.
 		if swap[0] == None:
-			self.handCardsPlay(swap[1])
+			self.handCardsPlay()
 			self.inPregame = False
 			return
 
-		# Check legality of swap and apply if legal.
+		# Check legality of swap and apply if necessary.
 		else:
 			upCard = swap[0]
 			handCard = swap[1]
-			if self.gameBoard.isLegalSwap(upCard, handCard, self.activePlayer):
-				gameBoard.applySwap(swap, self.activePlayer)
-				self.changeActivePlayer()
+			#if self.gameBoard.isLegalSwap(activePlayer):
+			gameBoard.applySwap(swap, self.activePlayer)
+			self.changeActivePlayer()
 				# Send percepts to all players.
 				#for player in self.players:
 						
+			return
+
 
 	# Handles the playing of a down card.
 	def downCardPlay(self):
@@ -150,17 +148,20 @@ class Game:
 				return
 
 		# Check to see if action is valid. If so, play cards.
-		if self.gameBoard.isLegalUpCardPlay(action, self.activePlayer):
-			self.gameBoard.upCardsToPile(self.activePlayer, action)
-			self.changeActivePlayer()
+		for card in action:
+			# Invalid move: reject.
+			if not card.isPlayableOn(self.pileCard) and playableCards.contains(card):
+				return
+			# If all valid, push to pile.
+		self.gameBoard.upCardsToPile(self.activePlayer, action)
+		self.changeActivePlayer()
 
 	# Handles the playing of hand cards.
-	def handCardsPlay(self, action=None):
-		if action == None:
-			hand = self.gameBoard.viewHand(self.activePlayer)
-			upCards = self.gameBoard.viewUpCards(self.activePlayer)
-			playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
-			action = self.activePlayer.chooseHandCard(hand, upCards, playableCards)
+	def handCardsPlay(self):
+		hand = self.gameBoard.viewHand(self.activePlayer)
+		upCards = self.gameBoard.viewUpCards(self.activePlayer)
+		playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
+		action = self.activePlayer.chooseHandCard(hand, upCards, playableCards)
 		# Make sure a null action is true. If so, pick up the pile.
 		if action == []:
 			if playableCards == []:
@@ -169,22 +170,18 @@ class Game:
 				return
 
 		# Check to see if action is valid. If so, play cards.
-		if self.gameBoard.isLegalHandCardPlay(action, self.activePlayer):
-			self.gameBoard.handToPile(self.activePlayer, action)
-			self.changeActivePlayer()
+		for card in action:
+			# Invalid move: reject.
+			if not card.isPlayableOn(self.pileCard) and playableCards.contains(card):
+				return
+		# If all valid, push to pile.
+		self.gameBoard.handToPile(self.activePlayer, action)
+		self.changeActivePlayer()
+		return
 
 
 # Represents a configuration of the cards on the table and in players' hands.
 class GameBoard:
-
-	#######################################################
-	#######################################################
-	# CONSTRUCTOR:
-	# Initializes and shuffles the deck, deals cards to 
-	# players. Sets up all of the appropriate data
-	# structures.
-	#######################################################
-	#######################################################
 
 	def __init__(self, players):
 		self.pile = Stack()
@@ -224,13 +221,9 @@ class GameBoard:
 			for i in range(1, 4):
 				self.hands[ID].append(self.deck.pop())
 
-	#######################################################
-	#######################################################
-	# TOSTRING() METHODS:
-	# These are mainly useful for debugging in the terminal.
-	#######################################################
-	#######################################################
-
+	# TOSTRING() METHODS ARE TEMPORARY!
+	# After we get the GUI up and running, we can
+	# cut these.
 	def deckToString(self):
 		return "Deck: " + self.deck.toString()
 
@@ -273,27 +266,11 @@ class GameBoard:
 	def discardToString(self):
 		return "Discard: " + self.discard.toString()
 
-	#######################################################
-	#######################################################
-	# BOOLEAN ACCESSOR METHODS:
-	# Gets True or False values about the GameBoard or 
-	# things in it.
-	#######################################################
-	#######################################################
-
 	# Returns True iff game is over.
 	def isTerminal(self):
 		for player in self.players:
 			if self.downCards[player.getID()] == [] and self.hands[player.getID()] == []:
 				return True
-
-	# Returns True iff down cards are playable for player with agentID.
-	def downCardsPlayable(self, agentID):
-		return self.upCards[agentID] == [] and self.hands[agentID] == []
-
-	# Returns True iff up cards are playable for player with agentID.
-	def upCardsPlayable(self, agentID):
-		return self.hands[agentID] == [] and not self.upCards[agentID] == []
 
 	# Returns true iff the top four cards of the pile are the same.
 	def topFourSame(self):
@@ -315,71 +292,6 @@ class GameBoard:
 			card = temp.pop()
 			self.pile.push(card)
 		return output
-
-	# Returns True iff player can legally make swap
-	def isLegalSwap(self, upCard, handCard, player):
-		upCards = self.upCards[player.getID()]
-		hand = self.hands[player.getID()]
-		if upCard in upCards and handCard in hand:
-			return True
-		else:
-			return False
-
-	# Returns True iff player can legally play upCardsToPlay.
-	def isLegalUpCardPlay(self, upCardsToPlay, player):
-		pileCard = self.pile.peek()
-		upCards = self.upCards[player.getID()]
-		# If action is empty, make sure playableCards is empty too.
-		if upCardsToPlay == []:
-			playableCards = self.getPlayableUpCards(player)
-			if playableCards == []:
-				return True
-			else:
-				return False
-
-		# If action nonempty, check that all cards are in upCards, same rank, and playable on pile.		
-		if not self.allSameRank(upCardsToPlay):
-			return False	
-		for upCard in upCardsToPlay:
-			if not upCard in upCards or not upCard.isPlayableOn(pileCard):
-				return False
-		return True
-
-	# Returns True iff player can legally play handCardsToPlay.
-	def isLegalHandCardPlay(self, handCardsToPlay, player):
-		pileCard = self.pile.peek()
-		hand = self.hands[player.getID()]
-		# If action is empty, make sure playableCards is empty too.
-		if handCardsToPlay == []:
-			playableCards = self.getPlayableHandCards(player)
-			if playableCards == []:
-				return True
-			else:
-				return False
-
-		# If action nonempty, check that all cards are in hand, same rank, and playable on pile.	
-		if not self.allSameRank(handCardsToPlay):
-			return False		
-		for handCard in handCardsToPlay:
-			if not handCard in hand or not handCard.isPlayableOn(pileCard):
-				return False
-		return True
-
-	# Returns True iff all cards in cardList have same rank.
-	def allSameRank(self, cardList):
-		oldRank = cardList[0].getRank()
-		for card in cardList:
-			rank = card.getRank()
-			if not rank == oldRank:
-				return False
-		return True
-
-	#######################################################
-	#######################################################
-	# NON-BOOLEAN ACCESSOR METHODS:
-	# Used to access different attributes of the GameBoard
-	#######################################################
-	#######################################################
 
 	# Returns the card on top of the pile.
 	def peekPile(self):
@@ -419,12 +331,10 @@ class GameBoard:
 				playableCards.append(card)
 		return playableCards
 
-	#######################################################
-	#######################################################
-	# MUTATOR METHODS:
-	# These methods make changes to the GameBoard.
-	#######################################################
-	#######################################################
+	# Changes the GameBoard as a result of an action and
+	# sends out percepts.
+	def enactAction(self, action):
+		return
 
 	# Places cards from an players's hand into the pile.
 	def handToPile(self, player, cardList):
@@ -463,7 +373,7 @@ class GameBoard:
 			self.discard.push(card)
 		self.discard.push(topCard)
 
-	# Applies a swap, assuming it's legal.
+	# Applies a swap. 
 	def applySwap(self, swap, player):
 		upSwap = swap[0]
 		handSwap = swap[1]
@@ -475,18 +385,18 @@ class GameBoard:
 		hand.remove(handSwap)
 		upCards.append(handSwap)
 
-	# Make player draw the necessary number of cards.
 	def draw(self, player):
+		if self.deck.isEmpty():
+			return
 		hand = self.hands[player.getID()]
-		# Player must draw enough cards to have
-		# at least 3 (if there are enough).
-		cardsToDraw = min(3 - len(hand), self.deck.size())
-		if cardsToDraw > 0:
+		cardsToDraw = 3 - len(hand)
+		if cardsToDraw > 0 and not self.deck.isEmpty():
 			for i in range(0, cardsToDraw):
+				if self.deck.isEmpty():
+					return
 				card = self.deck.pop()
 				hand.append(card)
 
-	# Used to clear a 3 from the top of the pile.
 	def clearTopCard(self):
 		topCard = self.pile.pop()
 		self.discard.push(topCard)
@@ -494,7 +404,6 @@ class GameBoard:
 # Represents a single card object with rank, suit, and wildness.
 class Card:
 
-	# Initializes the rank, suit, and wildness of the Card.
 	def __init__(self, rank, suit):
 		self.rank = rank
 		self.suit = suit
@@ -512,7 +421,9 @@ class Card:
 	def isWild(self):
 		return self.wild
 
-	# Returns a String representation of the Card.
+	# TOSTRING METHOD IS TEMPORARY!
+	# Once we get the GUI up and running, we
+	# can cut this. 
 	def toString(self):
 		translatedRank = ""
 		if self.rank == 11:
@@ -549,9 +460,7 @@ class Card:
 			else:
 				return False
 
-	# Returns True iff card is more valuable than otherCard.
-	# Value order:
-	# 3 > 10 > 2 > A > K > ... > 4
+	# Returns true iff card is more valuable than otherCard.
 	def isBetterThan(self, otherCard):
 		if otherCard.getRank() == 3:
 			return False
@@ -573,6 +482,8 @@ class Card:
 					return True
 				else:
 					return False
+
+
 
 # A general purpose, last in first out (LIFO) data structure.
 # In our implementation, used for representing stacks of Cards.
@@ -602,7 +513,7 @@ class Stack:
 	def size(self):
 		return len(self.list)
 
-	# Returns True iff stack is empty.
+	# Returns true iff stack is empty.
 	def isEmpty(self):
 		return self.size() == 0
 
@@ -613,7 +524,7 @@ class Stack:
 		index = self.size() - 1
 		return self.list[index]
 
-	# Returns a String representation of the stack.
+	# Returns a string representation of the stack.
 	def toString(self):
 		output = "["
 		for item in self.list:
@@ -627,6 +538,19 @@ class RandomAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
+		self.pileRep = Stack()	# Internal representation of the pile.
+		self.discardPileRep = {}	# Internal representation of the discard pile.
+		self.opponentHandRep = {}	# Internal representation of the opponent's hand.
+
+		# Percept types:
+		self.pickedUpPile = 1
+		self.opponentPickedUpPile = 2
+		self.playedCard = 1
+		self.opponentPlayedCard = 2
+		self.pickedUpPile = 1
+		self.opponentPickedUpPile = 2
+		self.unsuccessfulPlay = 5
+		self.opponentUnsuccessfulPlay = 6
 
 	def getID(self):
 		return self.agentID
@@ -636,37 +560,25 @@ class RandomAgent:
 		if playableCards == []:
 			return []
 		else:
-			rank = random.choice(playableCards).getRank()
-			cardsToPlay = self.getAllOfRank(rank, playableCards)
-			return cardsToPlay
+			return [random.choice(playableCards)]
 
 	# Choose legal up card(s) to play.
 	def chooseUpCard(self, upCards, playableCards):
 		if playableCards == []:
 			return []
 		else:
-			rank = random.choice(playableCards).getRank()
-			cardsToPlay = self.getAllOfRank(rank, playableCards)
-			return cardsToPlay
+			return [random.choice(playableCards)]
 
 	# Trivial; return.
 	def chooseDownCard(self):
 		return
-
-	# Return a list of all cards in playableCards of a certain rank.
-	def getAllOfRank(self, rank, playableCards):
-		output = []
-		for card in playableCards:
-			if card.getRank() == rank:
-				output.append(card)
-		return output
 
 	# Randomly chooses a legal swap or to begin turn-taking.
 	# Legal swaps are represented as (upCard, handCard) tuples.
 	# If we want to play a card, return (None, cardList).
 	def chooseSwap(self, hand, upCards, playableCards):
 		# Randomly choose between swapping and putting down.
-		handPlay = [random.choice(hand)]
+		handPlay = random.choice(hand)
 		return (None, handPlay)
 		
 		# Return a valid swap.
@@ -682,9 +594,19 @@ class GreedyAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
-		self.pileRep = Stack()		# Internal representation of the pile.
-		self.discardPileRep = []	# Internal representation of the discard pile.
-		self.opponentHandRep = []	# Internal representation of the opponent's hand.
+		self.pileRep = Stack()	# Internal representation of the pile.
+		self.discardPileRep = {}	# Internal representation of the discard pile.
+		self.opponentHandRep = {}	# Internal representation of the opponent's hand.
+
+		# Percept types:
+		self.pickedUpPile = 1
+		self.opponentPickedUpPile = 2
+		self.playedCard = 1
+		self.opponentPlayedCard = 2
+		self.pickedUpPile = 1
+		self.opponentPickedUpPile = 2
+		self.unsuccessfulPlay = 5
+		self.opponentUnsuccessfulPlay = 6
 
 	def getID(self):
 		return self.agentID
@@ -716,7 +638,7 @@ class GreedyAgent:
 		worstUpCard = self.worstCardInList(upCards)
 		# If there are no more productive swaps, play lowest card(s).
 		if not bestHandCard.isBetterThan(worstUpCard):
-			worstHandCards = self.worstCardsInList(playableCards)
+			worstHandCards = self.worstCardInList(playableCards)
 			return (None, worstHandCards)
 		
 		# Return a valid swap.
@@ -760,9 +682,9 @@ class GreedyAgent:
 if __name__ == '__main__':
 
 	wins = [0, 0]
-	trials = 10
+	trials = 1000
 	for i in range(1, trials+1):
-		game = Game(False)
+		game = Game(True)
 		gameBoard = game.getGameBoard()
 	
 		if trials == 1:
