@@ -59,6 +59,9 @@ class Game:
 		# If there's a ten on the pile, clear and skip activePlayer's turn.
 		if not self.pileCard == None and (self.pileCard.getRank() == 10 or gameBoard.topFourSame()):
 			gameBoard.clearPile()
+			# Send percepts to all players.
+			for player in self.players:
+				player.updateKnowledge("DISCARD")
 			self.changeActivePlayer()
 			return
 
@@ -67,6 +70,9 @@ class Game:
 		if not self.pileCard == None and self.pileCard.getRank() == 3:
 			gameBoard.clearTopCard()
 			gameBoard.pileToHand(self.activePlayer)
+			# Send percepts to all players.
+			for player in self.players:
+				player.updateKnowledge("PICKUP", self.activePlayer.getID())
 			self.changeActivePlayer()
 			return
 
@@ -102,22 +108,27 @@ class Game:
 		upCards = gameBoard.viewUpCards(self.activePlayer)
 		playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
 		swap = self.activePlayer.chooseSwap(hand, upCards, playableCards)
+		upCard = swap[0]
+		handCards = swap[1]
 		# Check to see if swap is actually a request to play.
 		# If so, submit that action.
-		if swap[0] == None:
-			self.handCardsPlay(swap[1])
+		if upCard == None:
+			self.handCardsPlay(handCards)
+			# Send percepts to all players.
+			for player in self.players:
+				player.updateKnowledge("PLAY", self.activePlayer.getID(), handCards)
 			self.inPregame = False
+			#self.changeActivePlayer()
 			return
 
 		# Check legality of swap and apply if legal.
 		else:
-			upCard = swap[0]
-			handCard = swap[1]
-			if self.gameBoard.isLegalSwap(upCard, handCard, self.activePlayer):
+			if self.gameBoard.isLegalSwap(upCard, handCards, self.activePlayer):
 				gameBoard.applySwap(swap, self.activePlayer)
 				self.changeActivePlayer()
 				# Send percepts to all players.
-				#for player in self.players:
+				for player in self.players:
+					player.updateKnowledge("SWAP", self.activePlayer.getID(), upCard, handCards)
 						
 
 	# Handles the playing of a down card.
@@ -131,10 +142,16 @@ class Game:
 		index = random.choice(indexList)
 		downCard = self.gameBoard.viewDownCards(self.activePlayer).pop(index)
 		self.gameBoard.downCardToPile(self.activePlayer, downCard)
+		# Send percepts to all players.
+		for player in self.players:
+			player.updateKnowledge("PLAY", self.activePlayer.getID(), [downCard])
 				
 		# If the card is not playable on the pile, pick it all up.
 		if not downCard.isPlayableOn(self.pileCard):
 			self.gameBoard.pileToHand(self.activePlayer)
+			# Send percepts to all players.
+			for player in self.players:
+				player.updateKnowledge("PICKUP", self.activePlayer.getID())
 		self.changeActivePlayer()
 
 	# Handles the playing of an up card.
@@ -146,34 +163,51 @@ class Game:
 		if action == []:
 			if playableCards == []:
 				self.gameBoard.pileToHand(self.activePlayer)
+				# Send percepts to all players.
+				for player in self.players:
+					player.updateKnowledge("PICKUP", self.activePlayer.getID())
 				self.changeActivePlayer()
+				return
 			else:
 				return
 
 		# Check to see if action is valid. If so, play cards.
 		if self.gameBoard.isLegalUpCardPlay(action, self.activePlayer):
 			self.gameBoard.upCardsToPile(self.activePlayer, action)
+			# Send percepts to all players.
+			for player in self.players:
+				player.updateKnowledge("PLAY", self.activePlayer.getID(), action)
 			self.changeActivePlayer()
+			return
 
 	# Handles the playing of hand cards.
 	def handCardsPlay(self, action=None):
-		if action == None:
-			hand = self.gameBoard.viewHand(self.activePlayer)
-			upCards = self.gameBoard.viewUpCards(self.activePlayer)
-			playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
+		hand = self.gameBoard.viewHand(self.activePlayer)
+		upCards = self.gameBoard.viewUpCards(self.activePlayer)
+		playableCards = self.gameBoard.getPlayableHandCards(self.activePlayer)
+
+		if action == None:	
 			action = self.activePlayer.chooseHandCard(hand, upCards, playableCards)
 		# Make sure a null action is true. If so, pick up the pile.
 		if action == []:
 			if playableCards == []:
 				self.gameBoard.pileToHand(self.activePlayer)
+				# Send percepts to all players.
+				for player in self.players:
+					player.updateKnowledge("PICKUP", self.activePlayer.getID())
 				self.changeActivePlayer()
+				return
 			else:
 				return
 
 		# Check to see if action is valid. If so, play cards.
 		if self.gameBoard.isLegalHandCardPlay(action, self.activePlayer):
 			self.gameBoard.handToPile(self.activePlayer, action)
+			# Send percepts to all players.
+			for player in self.players:
+				player.updateKnowledge("PLAY", self.activePlayer.getID(), action)
 			self.changeActivePlayer()
+			return
 
 
 # Represents a configuration of the cards on the table and in players' hands.
@@ -665,12 +699,18 @@ class RandomAgent:
 				output.append(card)
 		return output
 
+	# Return a list of cards in playableCards of a certain rank.
+	# Must return at least one card.
 	def getSomeOfRank(self, rank, playableCards):
 		output = []
+		pickedOne = False
 		for card in playableCards:
-			choice = random.choice([0, 1])
-			if choice == 1:
+			if not pickedOne and card.getRank() == rank:
 				output.append(card)
+			elif pickedOne and card.getRank() == rank:
+				choice = random.choice([0, 1])
+				if choice == 1:
+					output.append(card)
 		return output
 
 	# Randomly chooses a legal swap or to begin turn-taking.
@@ -686,11 +726,91 @@ class RandomAgent:
 		handSwap = random.choice(hand)
 		return (upSwap, handSwap)
 
-	# Update knowledge based on percept.
-	def updateKnowledge(self, perceptType, cardList=None):
+	# Swap best card in hand with worst card in up cards until
+	# there are no more productive swaps.
+	# Legal swaps are represented as (upCard, handCard) tuples.
+	# If we want to play a card, return (None, cardList).
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
 		return
 
 class GreedyAgent:
+
+	def __init__(self, agentID):
+		self.agentID = agentID
+
+	def getID(self):
+		return self.agentID
+
+	# Choose the lowest playable cards.
+	def chooseHandCard(self, hand, upCards, playableCards):
+		if playableCards == []:
+			return []
+		else:
+			return self.worstCardsInList(playableCards)
+
+	# Choose the lowest playable cards.
+	def chooseUpCard(self, upCards, playableCards):
+		if playableCards == []:
+			return []
+		else:
+			return self.worstCardsInList(playableCards)
+
+	# Trivial; return.
+	def chooseDownCard(self):
+		return
+
+	# Swap best card in hand with worst card in up cards until
+	# there are no more productive swaps.
+	# Legal swaps are represented as (upCard, handCard) tuples.
+	# If we want to play a card, return (None, cardList).
+	def chooseSwap(self, hand, upCards, playableCards):
+		bestHandCard = self.bestCardInList(hand)
+		worstUpCard = self.worstCardInList(upCards)
+		# If there are no more productive swaps, play lowest card(s).
+		if not bestHandCard.isBetterThan(worstUpCard):
+			worstHandCards = self.worstCardsInList(playableCards)
+			return (None, worstHandCards)
+		
+		# Return a valid swap.
+		else:
+			return (worstUpCard, bestHandCard)
+
+	# Swap best card in hand with worst card in up cards until
+	# there are no more productive swaps.
+	# Legal swaps are represented as (upCard, handCard) tuples.
+	# If we want to play a card, return (None, cardList).
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
+		return
+
+	# Return one of the best cards in a list.
+	def bestCardInList(self, cardList):
+		bestCard = cardList[0]
+		for card in cardList:
+			if card.isBetterThan(bestCard):
+				bestCard = card
+		return bestCard
+
+	# Return one of the worst cards in a list.
+	def worstCardInList(self, cardList):
+		worstCard = cardList[0]
+		for card in cardList:
+			if worstCard.isBetterThan(card):
+				worstCard = card
+		return worstCard
+
+	# Returns the lowest valued cards in a list.
+	def worstCardsInList(self, cardList):
+		worstCards = []
+		worstCard = cardList[0]
+		for card in cardList:
+			if worstCard.getRank() == card.getRank():
+				worstCards.append(card)
+			elif worstCard.isBetterThan(card):
+				worstCards = [card]
+				worstCard = card
+		return worstCards
+
+class HeuristicAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
@@ -736,7 +856,31 @@ class GreedyAgent:
 			return (worstUpCard, bestHandCard)
 
 	# Update knowledge based on percept.
-	def updateKnowledge(self, perceptType, cardList=None):
+	# cardList only given on "PLAY" move.
+	# agentID only used on "PICKUP" and "PLAY".
+	# handCard only used on "SWAP", where cardList is an up card.
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
+		if perceptType == "PICKUP":
+			if not agentID == self.getID():
+				while not self.pileRep.isEmpty():
+					card = self.pileRep.pop()
+					self.opponentHandRep.append(card)
+		elif perceptType == "DISCARD":
+			while not self.pileRep.isEmpty():
+				card = self.pileRep.pop()
+				self.discardPileRep.append(card)
+		elif perceptType == "PLAY":
+			if not agentID == self.getID():
+				for card in cardList:
+					pileRep.append(card)
+		elif perceptType == "SWAP":
+			upCard = cardList
+			handCard = handCard
+			if handCard in self.opponentHandRep:
+				self.opponentHandRep.remove(handCard)
+			self.opponentHandRep.append(upCard)
+		else:
+			print "INVALID PERCEPT TYPE"
 		return
 
 	# Return one of the best cards in a list.
@@ -767,12 +911,11 @@ class GreedyAgent:
 				worstCard = card
 		return worstCards
 
-
 # Main method used for testing.
 if __name__ == '__main__':
 
 	wins = [0, 0, 0]
-	trials = 100
+	trials = 1000
 	numTurns = []
 	printTrials = False
 	threshold = 100000
