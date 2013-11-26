@@ -7,8 +7,8 @@ class Game:
 	# Construct players and GameBoard.
 	def __init__(self, playerOneHuman):
 		self.inPregame = True
-		self.playerOne = RandomAgent(1)
-		self.playerTwo = GreedyAgent(2)
+		self.playerOne = GreedyAgent(1)
+		self.playerTwo = RandomAgent(2)
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = GameBoard(self.players)
@@ -825,6 +825,8 @@ class HeuristicAgent:
 	def chooseHandCard(self, hand, upCards, playableCards):
 		if playableCards == []:
 			return []
+		elif self.sevensRule(hand, playableCards):
+			return self.getAllOfRank(7, playableCards)
 		else:
 			return self.worstCardsInList(playableCards)
 
@@ -855,6 +857,14 @@ class HeuristicAgent:
 		else:
 			return (worstUpCard, bestHandCard)
 
+	# Return a list of all cards in playableCards of a certain rank.
+	def getAllOfRank(self, rank, playableCards):
+		output = []
+		for card in playableCards:
+			if card.getRank() == rank:
+				output.append(card)
+		return output
+
 	# Update knowledge based on percept.
 	# cardList only given on "PLAY" move.
 	# agentID only used on "PICKUP" and "PLAY".
@@ -872,7 +882,7 @@ class HeuristicAgent:
 		elif perceptType == "PLAY":
 			if not agentID == self.getID():
 				for card in cardList:
-					pileRep.append(card)
+					self.pileRep.push(card)
 		elif perceptType == "SWAP":
 			upCard = cardList
 			handCard = handCard
@@ -911,6 +921,21 @@ class HeuristicAgent:
 				worstCard = card
 		return worstCards
 
+	# Returns True iff sevens rule is applicable.
+	def sevensRule(self, hand, playableCards):
+		if self.containsRank(playableCards, 7) and self.containsRank(hand, 6):
+			return True
+		else:
+			return False
+
+	# Returns True iff cardList contains at least one
+	# card of a certain rank.
+	def containsRank(self, cardList, rank):
+		for card in cardList:
+			if card.getRank() == rank:
+				return True
+		return False
+
 # Main method used for testing.
 if __name__ == '__main__':
 
@@ -918,7 +943,7 @@ if __name__ == '__main__':
 	trials = 1000
 	numTurns = []
 	printTrials = False
-	threshold = 100000
+	threshold = 50000
 	for i in range(1, trials+1):
 		turns = 0
 		game = Game(False)
