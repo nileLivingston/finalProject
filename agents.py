@@ -1,7 +1,51 @@
 import util
 import random
 
-# An agent that randomly chooses actions.
+#######################################################
+#######################################################
+# agents.py
+#
+# This file contains all of our Agent classes
+# At the beginning is an "abstract" Agent class, used
+# to specify all of the necessary methods for a functional
+# Agent.
+#######################################################
+#######################################################
+
+# Abstract description of a Schiesskopf agent.
+class Agent:
+
+	def __init__(self, agentID):
+		self.agentID = agentID
+
+	def getID(self):
+		return self.agentID
+
+	# Returns a list of playable hand cards.
+	def chooseHandCard(self, hand, upCards, playableCards):
+		return 
+
+	# Returns a list of playable up cards.
+	def chooseUpCard(self, upCards, playableCards):
+		return
+
+	# Trivial method. Computer agents always just return,
+	# HumanAgent will be prompted by chooseDownCard for input.
+	# Because no choice is necessary with down cards, this is purely
+	# an input verification method.
+	def chooseDownCard(self):
+		return
+
+	# Returns a double indicating a swap: (upCard, handCard).
+	def chooseSwap(self, hand, upCards, playableCards):
+		return
+
+	# Used to update knowledge representations for Agents that use them.
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
+		return
+
+
+# An agent that chooses actions randomly.
 class RandomAgent:
 
 	def __init__(self, agentID):
@@ -30,9 +74,34 @@ class RandomAgent:
 			cardsToPlay = self.getSomeOfRank(rank, playableCards)
 			return cardsToPlay
 
-	# Trivial; return.
 	def chooseDownCard(self):
 		return
+
+	# Randomly chooses a legal swap or to begin turn-taking.
+	# Legal swaps are represented as (upCard, handCard) tuples.
+	# If we want to play a card, return (None, cardList).
+	def chooseSwap(self, hand, upCards, playableCards):
+		# Randomly choose between swapping and putting down.
+		if random.choice([0, 1]) == 1:
+			# Return a valid first play.
+			handPlay = [random.choice(hand)]
+			return (None, handPlay)
+		
+		else:
+			# Return a valid swap.
+			upSwap = random.choice(upCards)
+			handSwap = random.choice(hand)
+			return (upSwap, handSwap)
+
+	# No knowledge is stored, so method is trivial.
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
+		return
+
+	#######################################################
+	#######################################################
+	# HELPER METHODS
+	#######################################################
+	#######################################################
 
 	# Return a list of all cards in playableCards of a certain rank.
 	def getAllOfRank(self, rank, playableCards):
@@ -56,26 +125,7 @@ class RandomAgent:
 					output.append(card)
 		return output
 
-	# Randomly chooses a legal swap or to begin turn-taking.
-	# Legal swaps are represented as (upCard, handCard) tuples.
-	# If we want to play a card, return (None, cardList).
-	def chooseSwap(self, hand, upCards, playableCards):
-		# Randomly choose between swapping and putting down.
-		handPlay = [random.choice(hand)]
-		return (None, handPlay)
-		
-		# Return a valid swap.
-		upSwap = random.choice(upCards)
-		handSwap = random.choice(hand)
-		return (upSwap, handSwap)
-
-	# Swap best card in hand with worst card in up cards until
-	# there are no more productive swaps.
-	# Legal swaps are represented as (upCard, handCard) tuples.
-	# If we want to play a card, return (None, cardList).
-	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
-		return
-
+# An Agent that plays all cards of the lowest-valued playable rank it has.
 class GreedyAgent:
 
 	def __init__(self, agentID):
@@ -84,28 +134,25 @@ class GreedyAgent:
 	def getID(self):
 		return self.agentID
 
-	# Choose the lowest playable cards.
+	# Choose all cards of the lowest playable rank in hand.
 	def chooseHandCard(self, hand, upCards, playableCards):
 		if playableCards == []:
 			return []
 		else:
 			return self.worstCardsInList(playableCards)
 
-	# Choose the lowest playable cards.
+	# Choose all cards of the lowest playable rank in upCards.
 	def chooseUpCard(self, upCards, playableCards):
 		if playableCards == []:
 			return []
 		else:
 			return self.worstCardsInList(playableCards)
 
-	# Trivial; return.
 	def chooseDownCard(self):
 		return
 
 	# Swap best card in hand with worst card in up cards until
 	# there are no more productive swaps.
-	# Legal swaps are represented as (upCard, handCard) tuples.
-	# If we want to play a card, return (None, cardList).
 	def chooseSwap(self, hand, upCards, playableCards):
 		bestHandCard = self.bestCardInList(hand)
 		worstUpCard = self.worstCardInList(upCards)
@@ -118,12 +165,15 @@ class GreedyAgent:
 		else:
 			return (worstUpCard, bestHandCard)
 
-	# Swap best card in hand with worst card in up cards until
-	# there are no more productive swaps.
-	# Legal swaps are represented as (upCard, handCard) tuples.
-	# If we want to play a card, return (None, cardList).
+	# No knowledge is stored, so method is trivial.
 	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
 		return
+
+	#######################################################
+	#######################################################
+	# HELPER METHODS
+	#######################################################
+	#######################################################
 
 	# Return one of the best cards in a list.
 	def bestCardInList(self, cardList):
@@ -153,6 +203,8 @@ class GreedyAgent:
 				worstCard = card
 		return worstCards
 
+# An Agent that uses basic, intuitive heuristics, falling back on a 
+# greedy approach when no heuristics are applicable.
 class HeuristicAgent:
 
 	def __init__(self, agentID):
@@ -164,7 +216,7 @@ class HeuristicAgent:
 	def getID(self):
 		return self.agentID
 
-	# Choose the lowest playable cards.
+	# Apply heuristics if possible, otherwise be greedy.
 	def chooseHandCard(self, hand, upCards, playableCards):
 		if playableCards == []:
 			return []
@@ -173,21 +225,18 @@ class HeuristicAgent:
 		else:
 			return self.worstCardsInList(playableCards)
 
-	# Choose the lowest playable cards.
+	# Apply heuristics if possible, otherwise be greedy.
 	def chooseUpCard(self, upCards, playableCards):
 		if playableCards == []:
 			return []
 		else:
 			return self.worstCardsInList(playableCards)
 
-	# Trivial; return.
 	def chooseDownCard(self):
 		return
 
 	# Swap best card in hand with worst card in up cards until
 	# there are no more productive swaps.
-	# Legal swaps are represented as (upCard, handCard) tuples.
-	# If we want to play a card, return (None, cardList).
 	def chooseSwap(self, hand, upCards, playableCards):
 		bestHandCard = self.bestCardInList(hand)
 		worstUpCard = self.worstCardInList(upCards)
@@ -199,14 +248,6 @@ class HeuristicAgent:
 		# Return a valid swap.
 		else:
 			return (worstUpCard, bestHandCard)
-
-	# Return a list of all cards in playableCards of a certain rank.
-	def getAllOfRank(self, rank, playableCards):
-		output = []
-		for card in playableCards:
-			if card.getRank() == rank:
-				output.append(card)
-		return output
 
 	# Update knowledge based on percept.
 	# cardList only given on "PLAY" move.
@@ -235,6 +276,20 @@ class HeuristicAgent:
 		else:
 			print "INVALID PERCEPT TYPE"
 		return
+
+	#######################################################
+	#######################################################
+	# HELPER METHODS
+	#######################################################
+	#######################################################
+
+	# Return a list of all cards in playableCards of a certain rank.
+	def getAllOfRank(self, rank, playableCards):
+		output = []
+		for card in playableCards:
+			if card.getRank() == rank:
+				output.append(card)
+		return output
 
 	# Return one of the best cards in a list.
 	def bestCardInList(self, cardList):

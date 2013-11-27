@@ -25,14 +25,17 @@ if __name__ == '__main__':
 				game.printState()
 		winner = game.getWinner()
 		if winner == None:
-			print "Game " + str(i) + ": Draw"
+			#print "Game " + str(i) + ": Draw"
 			wins[0] += 1
 		else:
-			print "Game " + str(i) + ": Player " + str(winner)
+			#print "Game " + str(i) + ": Player " + str(winner)
 			wins[winner] += 1
 		numTurns.append(turns)
 
-	#winrates = [wins[0]/float(trials),wins[1]/float(trials), wins[2]/float(trials)]
+		quintile = trials/5
+		if i%quintile == 0:
+			print "Experiment progress: " + str((i/(quintile))*20) + "%"
+
 	print "\n"
 	print "##############################"
 	print "SUMMARY STATISTICS:"

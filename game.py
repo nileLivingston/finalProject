@@ -15,9 +15,11 @@ class Game:
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = gb.GameBoard(self.players)
+		# Choose player to go first randomly.
 		self.activePlayer = random.choice(self.players)
-		self.pileCard = None
-		self.ended = False
+
+		self.pileCard = self.gameBoard.peekPile()
+		self.ended = False	# True iff game is over.
 		self.winner = None
 
 	#######################################################
@@ -72,7 +74,7 @@ class Game:
 	#######################################################
 	#######################################################
 
-	# Moves the game forward a single turn and change activePlayer.
+	# Moves the game forward a single turn and changes activePlayer.
 	def takeTurn(self):
 		# Check to see if the game is ended.
 		if self.gameBoard.isTerminal():
@@ -81,15 +83,13 @@ class Game:
 			self.winner = self.activePlayer.getID()	
 			return
 
-		# Look at the card on top of the pile.
+		# Update pileCard.
 		self.pileCard = self.gameBoard.peekPile()
 		
 		# If there's a ten on the pile, clear and skip activePlayer's turn.
 		if not self.pileCard == None and (self.pileCard.getRank() == 10 or self.gameBoard.topFourSame()):
 			self.gameBoard.clearPile()
-			# Send percepts to all players.
-			for player in self.players:
-				player.updateKnowledge("DISCARD")
+			self.sendPercepts("DISCARD")
 			self.changeActivePlayer()
 			return
 
@@ -99,8 +99,7 @@ class Game:
 			self.gameBoard.clearTopCard()
 			self.gameBoard.pileToHand(self.activePlayer)
 			# Send percepts to all players.
-			for player in self.players:
-				player.updateKnowledge("PICKUP", self.activePlayer.getID())
+			self.sendPercepts("PICKUP", self.activePlayer.getID())
 			self.changeActivePlayer()
 			return
 
@@ -130,6 +129,11 @@ class Game:
 		elif self.activePlayer == self.playerTwo:
 			self.activePlayer = self.playerOne
 
+	# Send a certain percept to all players.
+	def sendPercepts(self, perceptType, agentID=None, cardList=None, handCard=None):
+		for player in self.players:
+			player.updateKnowledge(perceptType, agentID, cardList, handCard)
+
 	# Handles a swap.
 	def swapPlay(self):
 		hand = self.gameBoard.viewHand(self.activePlayer)
@@ -142,11 +146,9 @@ class Game:
 		# If so, submit that action.
 		if upCard == None:
 			self.handCardsPlay(handCards)
-			# Send percepts to all players.
-			for player in self.players:
-				player.updateKnowledge("PLAY", self.activePlayer.getID(), handCards)
+			self.sendPercepts("PLAY", self.activePlayer.getID(), handCards)
 			self.inPregame = False
-			#self.changeActivePlayer()
+			self.changeActivePlayer()
 			return
 
 		# Check legality of swap and apply if legal.
@@ -154,11 +156,8 @@ class Game:
 			if self.gameBoard.isLegalSwap(upCard, handCards, self.activePlayer):
 				self.gameBoard.applySwap(swap, self.activePlayer)
 				self.changeActivePlayer()
-				# Send percepts to all players.
-				for player in self.players:
-					player.updateKnowledge("SWAP", self.activePlayer.getID(), upCard, handCards)
+				self.sendPercepts("SWAP", self.activePlayer.getID(), upCard, handCards)
 						
-
 	# Handles the playing of a down card.
 	def downCardPlay(self):
 		# Select a down card and put it on the pile.
@@ -170,16 +169,12 @@ class Game:
 		index = random.choice(indexList)
 		downCard = self.gameBoard.viewDownCards(self.activePlayer).pop(index)
 		self.gameBoard.downCardToPile(self.activePlayer, downCard)
-		# Send percepts to all players.
-		for player in self.players:
-			player.updateKnowledge("PLAY", self.activePlayer.getID(), [downCard])
+		self.sendPercepts("PLAY", self.activePlayer.getID(), [downCard])
 				
 		# If the card is not playable on the pile, pick it all up.
 		if not downCard.isPlayableOn(self.pileCard):
 			self.gameBoard.pileToHand(self.activePlayer)
-			# Send percepts to all players.
-			for player in self.players:
-				player.updateKnowledge("PICKUP", self.activePlayer.getID())
+			self.sendPercepts("PICKUP", self.activePlayer.getID())
 		self.changeActivePlayer()
 
 	# Handles the playing of an up card.
@@ -191,9 +186,7 @@ class Game:
 		if action == []:
 			if playableCards == []:
 				self.gameBoard.pileToHand(self.activePlayer)
-				# Send percepts to all players.
-				for player in self.players:
-					player.updateKnowledge("PICKUP", self.activePlayer.getID())
+				self.sendPercepts("PICKUP", self.activePlayer.getID())
 				self.changeActivePlayer()
 				return
 			else:
@@ -202,9 +195,7 @@ class Game:
 		# Check to see if action is valid. If so, play cards.
 		if self.gameBoard.isLegalUpCardPlay(action, self.activePlayer):
 			self.gameBoard.upCardsToPile(self.activePlayer, action)
-			# Send percepts to all players.
-			for player in self.players:
-				player.updateKnowledge("PLAY", self.activePlayer.getID(), action)
+			self.sendPercepts("PLAY", self.activePlayer.getID(), action)
 			self.changeActivePlayer()
 			return
 
@@ -220,9 +211,7 @@ class Game:
 		if action == []:
 			if playableCards == []:
 				self.gameBoard.pileToHand(self.activePlayer)
-				# Send percepts to all players.
-				for player in self.players:
-					player.updateKnowledge("PICKUP", self.activePlayer.getID())
+				self.sendPercepts("PICKUP", self.activePlayer.getID())
 				self.changeActivePlayer()
 				return
 			else:
@@ -232,9 +221,7 @@ class Game:
 		# Check to see if action is valid. If so, play cards.
 		if self.gameBoard.isLegalHandCardPlay(action, self.activePlayer):
 			self.gameBoard.handToPile(self.activePlayer, action)
-			# Send percepts to all players.
-			for player in self.players:
-				player.updateKnowledge("PLAY", self.activePlayer.getID(), action)
+			self.sendPercepts("PLAY", self.activePlayer.getID(), action)
 			self.changeActivePlayer()
 			return
 		else:
