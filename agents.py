@@ -225,6 +225,7 @@ class HeuristicAgent:
 		self.pileRep = util.Stack()		# Internal representation of the pile.
 		self.discardPileRep = []	# Internal representation of the discard pile.
 		self.opponentHandRep = []	# Internal representation of the opponent's hand.
+		self.deckSize = 52 - 18
 
 	def getID(self):
 		return self.agentID
@@ -236,8 +237,42 @@ class HeuristicAgent:
 	def chooseHandCard(self, hand, upCards, playableCards):
 		if playableCards == []:
 			return []
+
+		# If 7s and 6s are in hand and playable, play 7s first.
 		elif self.sevensRule(hand, playableCards):
 			return self.getAllOfRank(7, playableCards)
+
+		# If pile is getting large and opponent has a 3, try to clear the pile.
+		#elif self.containsRank(self.opponentHandRep, 5) and self.pileRep.size() >= 5 and (self.containsRank(playableCards, 3) or self.containsRank(playableCards, 10)):
+			#if self.containsRank(playableCards, 3):
+				#return self.getOneOfRank(3, playableCards)
+			#if self.containsRank(playableCards, 10):
+				#return self.getOneOfRank(10, playableCards)
+
+		# If we can only play face cards, play only one of the lowest playable rank.
+		# minRank = self.lowestRank(playableCards)
+		# if minRank > 10 and self.deckSize > 0:
+
+		# 	return self.getOneOfRank(minRank, playableCards)
+
+		# If we can only play wilds, play one of the least valuable kind.
+		# elif self.onlyWilds(playableCards) and self.deckSize > 0:
+		# 	if self.containsRank(playableCards, 2):
+		# 		return self.getOneOfRank(2, playableCards)
+		# 	elif self.containsRank(playableCards, 10):
+		# 		return self.getOneOfRank(10, playableCards)
+		# 	elif self.containsRank(playableCards, 3):
+		# 		return self.getOneOfRank(3, playableCards)
+
+		elif self.onlyWilds(playableCards):
+			if self.containsRank(playableCards, 2):
+				return self.getOneOfRank(2, playableCards)
+			elif self.containsRank(playableCards, 10):
+				return self.getOneOfRank(10, playableCards)
+			elif self.containsRank(playableCards, 3):
+				return self.getOneOfRank(3, playableCards)
+
+		# Greedy case: play all of lowest playable rank.
 		else:
 			return self.worstCardsInList(playableCards)
 
@@ -245,6 +280,24 @@ class HeuristicAgent:
 	def chooseUpCard(self, upCards, playableCards):
 		if playableCards == []:
 			return []
+		elif self.sevensRule(upCards, playableCards):
+			return self.getAllOfRank(7, playableCards)
+
+		# If we can only play face cards, play only one of the lowest playable rank.
+		minRank = self.lowestRank(playableCards)
+		if minRank > 10:
+			return self.getOneOfRank(minRank, playableCards)
+
+		# If we can only play wilds, play one of the least valuable kind.
+		elif self.onlyWilds(playableCards):
+			if self.containsRank(playableCards, 2):
+				return self.getOneOfRank(2, playableCards)
+			elif self.containsRank(playableCards, 10):
+				return self.getOneOfRank(10, playableCards)
+			elif self.containsRank(playableCards, 3):
+				return self.getOneOfRank(3, playableCards)
+
+		# Greedy case: play all of lowest playable rank.
 		else:
 			return self.worstCardsInList(playableCards)
 
@@ -269,10 +322,9 @@ class HeuristicAgent:
 	# cardList only given on "PLAY" move.
 	# agentID only used on "PICKUP" and "PLAY".
 	# handCard only used on "SWAP", where cardList is an up card.
+	# On "DRAW", cardList = # of cards drawn.
 	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
 		if perceptType == "PICKUP":
-			print agentID
-			print self.getID()
 			while not self.pileRep.isEmpty():
 				card = self.pileRep.pop()
 				if card.getRank() == 3:
@@ -296,6 +348,8 @@ class HeuristicAgent:
 				if handCard in self.opponentHandRep:
 					self.opponentHandRep.remove(handCard)
 				self.opponentHandRep.append(upCard)
+		elif perceptType == "DRAW":
+			self.deckSize -= cardList
 		else:
 			print "INVALID PERCEPT TYPE"
 		return
@@ -313,6 +367,12 @@ class HeuristicAgent:
 			if card.getRank() == rank:
 				output.append(card)
 		return output
+
+	# Returns a list containing a single card of a single rank from playableCards.
+	def getOneOfRank(self, rank, playableCards):
+		for card in playableCards:
+			if card.getRank() == rank:
+				return [card]
 
 	# Return one of the best cards in a list.
 	def bestCardInList(self, cardList):
@@ -349,6 +409,13 @@ class HeuristicAgent:
 		else:
 			return False
 
+	# Returns True iff cardList contains only wilds.
+	def onlyWilds(self, cardList):
+		for card in cardList:
+			if not card.isWild(): 
+				return False
+		return True
+
 	# Returns True iff cardList contains at least one
 	# card of a certain rank.
 	def containsRank(self, cardList, rank):
@@ -356,6 +423,14 @@ class HeuristicAgent:
 			if card.getRank() == rank:
 				return True
 		return False
+
+	# Return the lowest rank in cardList.
+	def lowestRank(self, cardList):
+		minRank = cardList[0]
+		for card in cardList:
+			if card.getRank() < minRank:
+				minRank = card.getRank()
+		return minRank
 
 	def oppHandRepToString(self):
 		output = ""
@@ -371,3 +446,6 @@ class HeuristicAgent:
 
 	def pileRepToString(self):
 		return self.pileRep.toString()
+
+	def getDeckSize(self):
+		return str(self.deckSize)

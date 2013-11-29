@@ -260,7 +260,8 @@ class GameBoard:
 			hand.remove(card)
 			self.pile.push(card)
 
-		self.draw(player)
+		numDrawn = self.draw(player)
+		return numDrawn
 
 	# Places cards from the pile into the agent's hand.
 	def pileToHand(self, player):
@@ -312,6 +313,9 @@ class GameBoard:
 			for i in range(0, cardsToDraw):
 				card = self.deck.pop()
 				hand.append(card)
+			return cardsToDraw
+		else:
+			return 0 
 
 	# Used to clear 3s from the top of the pile.
 	def clearThrees(self):

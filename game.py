@@ -48,6 +48,7 @@ class Game:
 	# Prints the current state of the game.
 	def printState(self):
 		print self.gameBoard.deckToString()
+		print self.playerTwo.getDeckSize()
 		print self.gameBoard.handsToString()
 		print "OppHandRep: " + self.playerTwo.oppHandRepToString()
 		print self.gameBoard.upCardsToString()
@@ -234,8 +235,9 @@ class Game:
 
 		# Check to see if action is valid. If so, play cards.
 		if self.gameBoard.isLegalHandCardPlay(action, self.activePlayer):
-			self.gameBoard.handToPile(self.activePlayer, action)
+			numDrawn = self.gameBoard.handToPile(self.activePlayer, action)
 			self.sendPercepts("PLAY", self.activePlayer.getID(), action)
+			self.sendPercepts("DRAW", self.activePlayer.getID(), numDrawn)
 			self.changeActivePlayer()
 			return
 		else:

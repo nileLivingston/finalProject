@@ -10,7 +10,7 @@ class Experiment:
 	def run(self):
 		wins = [0, 0, 0]
 		numTurns = []
-		printTrials = True
+		printTrials = False
 		threshold = 5000
 
 		print "\n"
@@ -29,6 +29,7 @@ class Experiment:
 				game.printState()
 			while not game.isEnded():
 				if turns > threshold:
+					#sys.end()
 					break
 				game.takeTurn()
 				turns += 1
@@ -42,9 +43,9 @@ class Experiment:
 			numTurns.append(turns)
 
 			if self.trials > i:
-				quintile = self.trials/5
-				if i%quintile == 0:
-					print "Experiment progress: " + str((i/(quintile))*20) + "%"
+				tenth = self.trials/10
+				if i%tenth == 0:
+					print "Experiment progress: " + str((i/(tenth))*10) + "%"
 
 		print "\n"
 		print "##############################"
