@@ -313,7 +313,13 @@ class GameBoard:
 				card = self.deck.pop()
 				hand.append(card)
 
-	# Used to clear a 3 from the top of the pile.
-	def clearTopCard(self):
-		topCard = self.pile.pop()
-		self.discard.push(topCard)
+	# Used to clear 3s from the top of the pile.
+	def clearThrees(self):
+		done = False
+		while not done:
+			topCard = self.pile.peek()
+			if not topCard == None and topCard.getRank() == 3:
+				self.pile.pop()
+				self.discard.push(topCard)
+			else:
+				done = True

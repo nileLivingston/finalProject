@@ -8,10 +8,27 @@ import agents
 class Game:
 
 	# Construct players and GameBoard.
-	def __init__(self, playerOneHuman):
+	def __init__(self, playerOneType, playerTwoType):
 		self.inPregame = True
-		self.playerOne = agents.GreedyAgent(1)
-		self.playerTwo = agents.RandomAgent(2)
+
+		if playerOneType == "RANDOM":
+			self.playerOne = agents.RandomAgent(1)
+		elif playerOneType == "GREEDY":
+			self.playerOne = agents.GreedyAgent(1)
+		elif playerOneType == "HEURISTIC":
+			self.playerOne = agents.HeuristicAgent(1)
+		else:
+			print "INVALID AGENT TYPE"
+
+		if playerTwoType == "RANDOM":
+			self.playerTwo = agents.RandomAgent(2)
+		elif playerTwoType == "GREEDY":
+			self.playerTwo = agents.GreedyAgent(2)
+		elif playerTwoType == "HEURISTIC":
+			self.playerTwo = agents.HeuristicAgent(2)
+		else:
+			print "INVALID AGENT TYPE"
+
 		self.players = [self.playerOne, self.playerTwo]
 
 		self.gameBoard = gb.GameBoard(self.players)
@@ -32,18 +49,14 @@ class Game:
 	def printState(self):
 		print self.gameBoard.deckToString()
 		print self.gameBoard.handsToString()
+		print "OppHandRep: " + self.playerTwo.oppHandRepToString()
 		print self.gameBoard.upCardsToString()
 		print self.gameBoard.downCardsToString()
 		print self.gameBoard.pileToString()
+		print "PileRep:" + self.playerTwo.pileRepToString()
 		print self.gameBoard.discardToString()
+		print "DisRep:" + self.playerTwo.discardRepToString()
 		print "Active player: " + str(self.activePlayer.getID())
-		print "HeuristicAgent's Representations:"
-		print "Opp hand: "
-		#print self.playerTwo.oppHandRepToString()
-		print "Pile:"
-		#print self.playerTwo.pileRepToString()
-		print "Discard:"
-		#print self.playerTwo.discardRepToString()
 		print "\n"
 
 	#######################################################
@@ -55,6 +68,9 @@ class Game:
 	# Returns the GameBoard.
 	def getGameBoard(self):
 		return self.gameBoard
+
+	def getPlayers(self):
+		return self.players
 
 	# Returns the ID of the active player.
 	def getActivePlayer(self):
@@ -96,7 +112,7 @@ class Game:
 		# If there's a three on the pile, discard the three, force activePlayer to
 		# pick up pile and skip their turn.
 		if not self.pileCard == None and self.pileCard.getRank() == 3:
-			self.gameBoard.clearTopCard()
+			self.gameBoard.clearThrees()
 			self.gameBoard.pileToHand(self.activePlayer)
 			# Send percepts to all players.
 			self.sendPercepts("PICKUP", self.activePlayer.getID())
@@ -146,17 +162,15 @@ class Game:
 		# If so, submit that action.
 		if upCard == None:
 			self.handCardsPlay(handCards)
-			self.sendPercepts("PLAY", self.activePlayer.getID(), handCards)
 			self.inPregame = False
-			self.changeActivePlayer()
 			return
 
 		# Check legality of swap and apply if legal.
 		else:
 			if self.gameBoard.isLegalSwap(upCard, handCards, self.activePlayer):
 				self.gameBoard.applySwap(swap, self.activePlayer)
-				self.changeActivePlayer()
 				self.sendPercepts("SWAP", self.activePlayer.getID(), upCard, handCards)
+				self.changeActivePlayer()
 						
 	# Handles the playing of a down card.
 	def downCardPlay(self):

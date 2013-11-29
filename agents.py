@@ -17,9 +17,13 @@ class Agent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
+		self.type = "ABSTRACTAGENT"
 
 	def getID(self):
 		return self.agentID
+
+	def getType(self):
+		return self.type
 
 	# Returns a list of playable hand cards.
 	def chooseHandCard(self, hand, upCards, playableCards):
@@ -50,9 +54,13 @@ class RandomAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
+		self.type = "RandomAgent"
 
 	def getID(self):
 		return self.agentID
+
+	def getType(self):
+		return self.type
 
 	# Randomly chooses a legal action.
 	def chooseHandCard(self, hand, upCards, playableCards):
@@ -130,9 +138,13 @@ class GreedyAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
+		self.type = "GreedyAgent"
 
 	def getID(self):
 		return self.agentID
+
+	def getType(self):
+		return self.type
 
 	# Choose all cards of the lowest playable rank in hand.
 	def chooseHandCard(self, hand, upCards, playableCards):
@@ -209,12 +221,16 @@ class HeuristicAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
+		self.type = "HeuristicAgent"
 		self.pileRep = util.Stack()		# Internal representation of the pile.
 		self.discardPileRep = []	# Internal representation of the discard pile.
 		self.opponentHandRep = []	# Internal representation of the opponent's hand.
 
 	def getID(self):
 		return self.agentID
+
+	def getType(self):
+		return self.type
 
 	# Apply heuristics if possible, otherwise be greedy.
 	def chooseHandCard(self, hand, upCards, playableCards):
@@ -255,24 +271,31 @@ class HeuristicAgent:
 	# handCard only used on "SWAP", where cardList is an up card.
 	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
 		if perceptType == "PICKUP":
-			if not agentID == self.getID():
-				while not self.pileRep.isEmpty():
-					card = self.pileRep.pop()
-					self.opponentHandRep.append(card)
+			print agentID
+			print self.getID()
+			while not self.pileRep.isEmpty():
+				card = self.pileRep.pop()
+				if card.getRank() == 3:
+					self.discardPileRep.append(card)
+				else:
+					if not agentID == self.getID():
+						self.opponentHandRep.append(card)
 		elif perceptType == "DISCARD":
 			while not self.pileRep.isEmpty():
 				card = self.pileRep.pop()
 				self.discardPileRep.append(card)
 		elif perceptType == "PLAY":
-			if not agentID == self.getID():
-				for card in cardList:
-					self.pileRep.push(card)
+			for card in cardList:
+				if not agentID == self.getID() and card in self.opponentHandRep:
+					self.opponentHandRep.remove(card)
+				self.pileRep.push(card)
 		elif perceptType == "SWAP":
 			upCard = cardList
 			handCard = handCard
-			if handCard in self.opponentHandRep:
-				self.opponentHandRep.remove(handCard)
-			self.opponentHandRep.append(upCard)
+			if not agentID == self.getID():
+				if handCard in self.opponentHandRep:
+					self.opponentHandRep.remove(handCard)
+				self.opponentHandRep.append(upCard)
 		else:
 			print "INVALID PERCEPT TYPE"
 		return
@@ -335,7 +358,16 @@ class HeuristicAgent:
 		return False
 
 	def oppHandRepToString(self):
-		output = "["
+		output = ""
 		for card in self.opponentHandRep:
 			output += card.toString() + " "
-		output += "]"
+		return "[" + output + "]"
+
+	def discardRepToString(self):
+		output = ""
+		for card in self.discardPileRep:
+			output += card.toString() + " "
+		return "[" + output + "]"
+
+	def pileRepToString(self):
+		return self.pileRep.toString()
