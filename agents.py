@@ -1,5 +1,5 @@
-import util
-import random
+import util, random, state
+import featureExtractor as fe
 
 #######################################################
 #######################################################
@@ -527,8 +527,8 @@ class HumanAgent:
 		if(counter != 0): action = [] #returns an empty(invalid) list if the cards were not available
 		return action
 
-
-class LearningAgent:
+# A Q-learning agent.
+class QLearningAgent:
 
 	def __init__(self, agentID):
 		self.agentID = agentID
@@ -537,4 +537,148 @@ class LearningAgent:
 		self.discardPileRep = []	# Internal representation of the discard pile.
 		self.opponentHandRep = []	# Internal representation of the opponent's hand.
 		self.deckSize = 52 - 18
-		self.weights = dict()
+		self.weights = util.Counter() # Stores weights.
+		self.epsilon = 0.2
+		self.alpha = 0.1
+		self.discount = 1
+		self.featExtractor = fe.featureExtractor()
+
+  	def getValue(self, state):
+	    """
+	      Returns max_action Q(state,action)
+	      where the max is over legal actions.  Note that if
+	      there are no legal actions, which is the case at the
+	      terminal state, you should return a value of 0.0.
+	    """
+	    
+	    # All possible actions from state.
+	    actions = self.getLegalActions(playableCards)
+	    # Terminal test.
+	    if not actions:
+	      return 0.0 
+	    maxQValue = float("-inf")
+	    # Find maximum QValue over all actions.
+	    for action in actions:
+	      QValue = self.getQValue(state, action)
+	      if QValue > maxQValue:
+	        maxQValue = QValue
+	          
+	    return maxQValue
+
+  	def getPolicy(self, playableCards):
+	    """
+	      Compute the best action to take in a state.  Note that if there
+	      are no legal actions, which is the case at the terminal state,
+	      you should return None.
+	    """
+	    "*** YOUR CODE HERE ***"
+
+	    # All possible actions from state.
+	    actions = self.getLegalActions(playableCards)
+	    # Terminal test.
+	    if not actions:
+	      return None
+	    maxQValue = float("-inf")
+	    # Keep a list of actions with equally maximal QValues. 
+	    maximizingActions = []
+	    for action in actions:
+	      QValue = self.getQValue(state, action)
+	      # If new QValue is strictly greater, list now only contains the new action.
+	      if QValue > maxQValue:
+	        maxQValue = QValue
+	        maximizingActions = [action]
+	      # If QValue comparison is a tie, add new item to the list.
+	      elif QValue == maxQValue:
+	        maximizingActions.append(action)
+
+	    # Choose randomly amongst tied actions. Random selection improves performance (value exploration).
+	    return random.choice(maximizingActions)
+    
+
+  	def getAction(self, playableCards):
+	    """
+	      Compute the action to take in the current state.  With
+	      probability self.epsilon, we should take a random action and
+	      take the best policy action otherwise.  Note that if there are
+	      no legal actions, which is the case at the terminal state, you
+	      should choose None as the action.
+
+	      HINT: You might want to use util.flipCoin(prob)
+	      HINT: To pick randomly from a list, use random.choice(list)
+	    """
+	    # Pick Action
+	    legalActions = self.getLegalActions(playableCards)
+	    action = None
+
+	    "*** YOUR CODE HERE ***"
+	    explore = util.flipCoin(self.epsilon)
+	    if explore:
+	    	action = random.choice(legalActions)
+	    else: 
+	    	action = self.getPolicy(playableCards)
+
+	    return action
+
+ 	def getQValue(self, state, action):
+	    """
+	      Should return Q(state,action) = w * featureVector
+	      where * is the dotProduct operator
+	    """
+
+	    # Dictionary of (feature->value) pairs.
+	    featureDict = self.featExtractor.getFeatures(state, action)
+	    # List of features (keys)
+	    featureVector = featureDict.keys()
+
+	    QValue = 0
+	    # QValue = sum over all feature values weighted by feature weights.
+	    for feature in featureVector:
+	      QValue += self.weights[feature]*featureDict[feature]
+
+	    return QValue
+
+  	def update(self, state, action, nextState, reward):
+	    """
+	       Should update your weights based on transition
+	    """
+
+	    # Dictionary of (feature->value) pairs.
+	    featureDict = self.featExtractor.getFeatures(state, action)
+	    # List of features (keys)
+	    featureVector = featureDict.keys()
+
+	    # Weight correction value.
+	    correction = (reward + self.discount*self.getValue(nextState)) - self.getQValue(state, action)
+
+	    # Update all weights.
+	    for feature in featureVector:
+	      self.weights[feature] += self.alpha*correction*featureDict[feature]
+
+	# Returns a list of lists, each inner list representing a legal action.
+	def getLegalActions(self, playableCards):
+		actions = []
+		listsOfRanks = dict()
+		for rank in range(2, 15):
+			listsOfRanks[rank] = []
+		for card in playableCards:
+			rank = card.getRank()
+			listsOfRanks[rank].append(card)
+
+		for rank in listOfRanks.keys():
+			rankList = listOfRanks[rank]
+			for index in range(0, len(rankList)):
+				tempList = []
+				for i in range(0, index):
+					tempList.append(rankList[i])
+				actions.append(tempList)
+
+		return actions
+
+
+
+
+
+
+
+
+
