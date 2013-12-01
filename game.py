@@ -17,6 +17,8 @@ class Game:
 			self.playerOne = agents.GreedyAgent(1)
 		elif playerOneType == "HEURISTIC":
 			self.playerOne = agents.HeuristicAgent(1)
+		elif playerOneType == "HUMAN":
+			self.playerOne = agents.HumanAgent(1)
 		else:
 			print "INVALID AGENT TYPE"
 
@@ -48,15 +50,15 @@ class Game:
 	# Prints the current state of the game.
 	def printState(self):
 		print self.gameBoard.deckToString()
-		print self.playerTwo.getDeckSize()
+		#print self.playerTwo.getDeckSize()
 		print self.gameBoard.handsToString()
-		print "OppHandRep: " + self.playerTwo.oppHandRepToString()
+		#print "OppHandRep: " + self.playerTwo.oppHandRepToString()
 		print self.gameBoard.upCardsToString()
 		print self.gameBoard.downCardsToString()
 		print self.gameBoard.pileToString()
-		print "PileRep:" + self.playerTwo.pileRepToString()
+		#print "PileRep:" + self.playerTwo.pileRepToString()
 		print self.gameBoard.discardToString()
-		print "DisRep:" + self.playerTwo.discardRepToString()
+		#print "DisRep:" + self.playerTwo.discardRepToString()
 		print "Active player: " + str(self.activePlayer.getID())
 		print "\n"
 

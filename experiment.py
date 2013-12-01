@@ -10,7 +10,7 @@ class Experiment:
 	def run(self):
 		wins = [0, 0, 0]
 		numTurns = []
-		printTrials = False
+		printTrials = True
 		threshold = 5000
 
 		print "\n"

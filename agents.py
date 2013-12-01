@@ -449,3 +449,92 @@ class HeuristicAgent:
 
 	def getDeckSize(self):
 		return str(self.deckSize)
+
+# BROKEN, please fix.
+class HumanAgent:
+
+	def __init__(self, agentID):
+		self.agentID = agentID
+		self.pileRep = util.Stack()	# Internal representation of the pile.
+		self.discardPileRep = {}	# Internal representation of the discard pile.
+		self.opponentHandRep = {}	# Internal representation of the opponent's hand.
+
+	def getID(self):
+		return self.agentID
+
+	def chooseHandCard(self, hand, upCards, playableCards):
+		rankToPlay = input("Enter the rank of the card/cards you want to play: ")
+		quantityToPlay = input("Enter the number of cards you want to play:" )
+
+		input = (rankToPlay, quantityToPlay)
+		action = getActionFromInput(playableCards, quantityToPlay)
+
+		return action
+
+	# Choose the lowest playable cards.
+	def chooseUpCard(self, upCards, playableCards):
+		rankToPlay = input("Enter the rank of the card/cards you want to play: ")
+		quantityToPlay = input("Enter the number of cards you want to play:" )
+
+		input = (rankToPlay, quantityToPlay)
+		action = getActionFromInput(playableCards, quantityToPlay)
+
+		return action
+
+	# Trivial; return.
+	def chooseDownCard(self):
+		return
+
+	# First input decide's whether to swap or to play.
+	# if play, calls the chooseHandCard() function
+	# else takes keyboard input to choose the cards to be swapped
+	# Tuple of chosen cards is returned if it is legal. checked at input stage.
+	# If we want to play a card, return (None, cardList).
+	def chooseSwap(self, hand, upCards, playableCards):
+
+		wantToSwap = 0
+		while(wantToSwap != 1 or wantToSwap != 9):
+			wantToSwap = input("Enter 1 to make a swap or 9 to take the first turn.")
+
+
+			if wantToSwap == 1:
+				handCardRank = input("Choose the rank of your hand-card: ")
+				handCardSuit = input("Choose the suit of your hand-card: ")
+				upCardRank = input("Choose the rank of your up-card: ")
+				upCardRank = input("Choose the rank of your up-card: ")
+				chosenHandCard = util.Card(handCardRank, handCardSuit)
+				chosenUpCard = util.Card(upCardRank, upCardSuit)
+				return (chosenUpCard, chosenHandCard)
+
+			else:
+				return (None, worstHandCards)
+
+	# Update knowledge based on percept.
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
+		return
+
+	# Accepts a tuple as input (rank, quantity) and converts it to an action list
+	# returns an empty list if the cards are not available
+	def getActionFromInput(self, playableCards, input):
+		action = []
+		counter = input[1] #keeps track of the number of cards to be played
+		for card in playAbleCards:
+			if (card.getRank() == input[0]):
+				action.append(card)
+				counter -= 1
+			if counter == 0: break
+
+		if(counter != 0): action = [] #returns an empty(invalid) list if the cards were not available
+		return action
+
+
+class LearningAgent:
+
+	def __init__(self, agentID):
+		self.agentID = agentID
+		self.type = "LearningAgent"
+		self.pileRep = util.Stack()		# Internal representation of the pile.
+		self.discardPileRep = []	# Internal representation of the discard pile.
+		self.opponentHandRep = []	# Internal representation of the opponent's hand.
+		self.deckSize = 52 - 18
+		self.weights = dict()
