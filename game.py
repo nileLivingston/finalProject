@@ -11,6 +11,7 @@ class Game:
 	def __init__(self, playerOneType, playerTwoType):
 		self.inPregame = True
 
+		# Construct player 1.
 		if playerOneType == "RANDOM":
 			self.playerOne = agents.RandomAgent(1)
 		elif playerOneType == "GREEDY":
@@ -22,6 +23,7 @@ class Game:
 		else:
 			print "INVALID AGENT TYPE"
 
+		# Construct player 2.
 		if playerTwoType == "RANDOM":
 			self.playerTwo = agents.RandomAgent(2)
 		elif playerTwoType == "GREEDY":
@@ -31,14 +33,15 @@ class Game:
 		else:
 			print "INVALID AGENT TYPE"
 
-		self.players = [self.playerOne, self.playerTwo]
 
+		self.players = [self.playerOne, self.playerTwo]
 		self.gameBoard = gb.GameBoard(self.players)
+
 		# Choose player to go first randomly.
 		self.activePlayer = random.choice(self.players)
 
 		self.pileCard = self.gameBoard.peekPile()
-		self.ended = False	# True iff game is over.
+		self.ended = False		# True iff game is over.
 		self.winner = None
 
 	#######################################################
@@ -50,15 +53,11 @@ class Game:
 	# Prints the current state of the game.
 	def printState(self):
 		print self.gameBoard.deckToString()
-		#print self.playerTwo.getDeckSize()
 		print self.gameBoard.handsToString()
-		#print "OppHandRep: " + self.playerTwo.oppHandRepToString()
 		print self.gameBoard.upCardsToString()
 		print self.gameBoard.downCardsToString()
 		print self.gameBoard.pileToString()
-		#print "PileRep:" + self.playerTwo.pileRepToString()
 		print self.gameBoard.discardToString()
-		#print "DisRep:" + self.playerTwo.discardRepToString()
 		print "Active player: " + str(self.activePlayer.getID())
 		print "\n"
 
@@ -72,6 +71,7 @@ class Game:
 	def getGameBoard(self):
 		return self.gameBoard
 
+	# Returns a list of the game's players.
 	def getPlayers(self):
 		return self.players
 
@@ -83,7 +83,7 @@ class Game:
 	def getWinner(self):
 		return self.winner
 
-	# True iff game is over.
+	# Returns True iff game is over.
 	def isEnded(self):
 		return self.ended
 

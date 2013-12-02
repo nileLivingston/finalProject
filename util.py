@@ -67,32 +67,7 @@ class Card:
 				return True
 			else:
 				return False
-
-	# Returns True iff card is more valuable than otherCard.
-	# Value order:
-	# 3 > 10 > 2 > A > K > ... > 4
-	def isBetterThan(self, otherCard):
-		if otherCard.getRank() == 3:
-			return False
-		elif otherCard.getRank() == 10:
-			if self.rank == 3:
-				return True
-			else:
-				return False
-		elif otherCard.getRank() == 2:
-			if self.rank == 3 or self.rank == 10:
-				return True
-			else:
-				return False
-		else:
-			if self.wild:
-				return True
-			else:
-				if self.rank > otherCard.getRank():
-					return True
-				else:
-					return False
-
+        
 
 # A general purpose, last in first out (LIFO) data structure.
 # In our implementation, used for representing stacks of Cards.

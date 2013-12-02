@@ -4,15 +4,9 @@ import random
 # Represents a configuration of the cards on the table and in players' hands.
 class GameBoard:
 
-	#######################################################
-	#######################################################
-	# CONSTRUCTOR:
 	# Initializes and shuffles the deck, deals cards to 
 	# players. Sets up all of the appropriate data
 	# structures.
-	#######################################################
-	#######################################################
-
 	def __init__(self, players):
 		self.pile = util.Stack()
 		self.deck = util.Stack()
@@ -53,7 +47,7 @@ class GameBoard:
 
 	#######################################################
 	#######################################################
-	# TOSTRING() METHODS:
+	# toString Methods:
 	# These are mainly useful for debugging in the terminal.
 	#######################################################
 	#######################################################
@@ -253,7 +247,7 @@ class GameBoard:
 	#######################################################
 	#######################################################
 
-	# Places cards from an players's hand into the pile.
+	# Places cards from player's hand into the pile.
 	def handToPile(self, player, cardList):
 		hand = self.hands[player.getID()]
 		for card in cardList:
@@ -263,21 +257,21 @@ class GameBoard:
 		numDrawn = self.draw(player)
 		return numDrawn
 
-	# Places cards from the pile into the agent's hand.
+	# Places cards from the pile into player's hand.
 	def pileToHand(self, player):
 		hand = self.hands[player.getID()]
 		while not self.pile.isEmpty():
 			card = self.pile.pop()
 			hand.append(card)
 
-	# Places cards from the player's up cards into the pile.
+	# Places cards from player's up cards into the pile.
 	def upCardsToPile(self, player, cardList):
 		upCards = self.upCards[player.getID()]
 		for card in cardList:
 			upCards.remove(card)
 			self.pile.push(card)
 
-	# Places a single down card on the pile.
+	# Places one of player's down cards on the pile.
 	def downCardToPile(self, player, card):
 		downCards = self.downCards[player.getID()]
 		downCards.remove(card)
@@ -290,6 +284,17 @@ class GameBoard:
 			card = self.pile.pop()
 			self.discard.push(card)
 		self.discard.push(topCard)
+
+	# Used to clear 3s from the top of the pile.
+	def clearThrees(self):
+		done = False
+		while not done:
+			topCard = self.pile.peek()
+			if not topCard == None and topCard.getRank() == 3:
+				self.pile.pop()
+				self.discard.push(topCard)
+			else:
+				done = True
 
 	# Applies a swap, assuming it's legal.
 	def applySwap(self, swap, player):
@@ -304,6 +309,7 @@ class GameBoard:
 		upCards.append(handSwap)
 
 	# Make player draw the necessary number of cards.
+	# Returns number of cards drawn in order to send percepts.
 	def draw(self, player):
 		hand = self.hands[player.getID()]
 		# Player must draw enough cards to have
@@ -317,13 +323,4 @@ class GameBoard:
 		else:
 			return 0 
 
-	# Used to clear 3s from the top of the pile.
-	def clearThrees(self):
-		done = False
-		while not done:
-			topCard = self.pile.peek()
-			if not topCard == None and topCard.getRank() == 3:
-				self.pile.pop()
-				self.discard.push(topCard)
-			else:
-				done = True
+	

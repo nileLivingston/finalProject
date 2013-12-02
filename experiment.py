@@ -1,17 +1,19 @@
 import game as g
 
+# Used to run multiple games at a time and assess agent performance.
 class Experiment:
 
-	def __init__(self, trials, playerOneType, playerTwoType):
+	def __init__(self, trials, playerOneType, playerTwoType, printTrials):
 		self.trials = trials
 		self.playerOneType = playerOneType
 		self.playerTwoType = playerTwoType
+		self.printTrials = printTrials
 
+	# Runs the experiment.
 	def run(self):
-		wins = [0, 0, 0]
-		numTurns = []
-		printTrials = True
-		threshold = 5000
+		wins = [0, 0, 0]	# To store the number of draws, player 1 wins, and player 2 wins.
+		numTurns = []		# To store the number of turns taken for each game.
+		threshold = 5000	# Maximum number of turns allowed per game: exceeding implies a draw.
 
 		print "\n"
 		print "##############################"
@@ -20,21 +22,26 @@ class Experiment:
 		print "Draw threshold: " + str(threshold)
 		print "##############################"
 		print "\n"
+
+		# Run <self.trials> games, each time recording who won and number of turns. 
 		for i in range(1, self.trials+1):
 			turns = 0
 			game = g.Game(self.playerOneType, self.playerTwoType)
 			gameBoard = game.getGameBoard()
 		
-			if printTrials:
+			if self.printTrials:
 				game.printState()
+
+			# If the game is not over, advance game by one turn.
 			while not game.isEnded():
 				if turns > threshold:
-					#sys.end()
 					break
 				game.takeTurn()
 				turns += 1
-				if printTrials:
+				if self.printTrials:
 					game.printState()
+
+			# Record the winner and number of turns.
 			winner = game.getWinner()
 			if winner == None:
 				wins[0] += 1
@@ -42,24 +49,30 @@ class Experiment:
 				wins[winner] += 1
 			numTurns.append(turns)
 
+			# Print out experiment progress.
 			if self.trials > i:
 				tenth = self.trials/10
 				if i%tenth == 0:
 					print "Experiment progress: " + str((i/(tenth))*10) + "%"
+
 
 		print "\n"
 		print "##############################"
 		print "SUMMARY STATISTICS:"
 		print "##############################"
 		print "Draw rate: " + str(wins[0]/float(self.trials))
+
 		player1WinRate =  wins[1]/float(self.trials)
 		player2WinRate = wins[2]/float(self.trials)
 		print "Player 1 (" + self.playerOneType + ") win rate: " + str(player1WinRate)
 		print "Player 2 (" + self.playerTwoType + ") win rate: " + str(player2WinRate)
 		print "\n"
+
 		print "Least number of turns: " + str(min(numTurns))
 		print "Greatest number of turns: " + str(max(numTurns))
 		print "Average number of turns: " + str(sum(numTurns)/len(numTurns))
+
+		# Compute median number of turns.
 		numTurns.sort()
 		if self.trials%2 == 0:
 			index = int((float(self.trials)/2) - 1)
@@ -68,3 +81,4 @@ class Experiment:
 			index = int((float(self.trials)/2))
 			median = numTurns[index]
 		print "Median number of turns: " + str(median)
+
