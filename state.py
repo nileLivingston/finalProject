@@ -1,3 +1,6 @@
+
+# Represents a state of the game as a Q-learner sees it. Represents imperfect 
+# information available to the agent.
 class State:
 
 	def __init__(self, hand, upCards, oppHandRep, pileRep, discardRep, deckSize):

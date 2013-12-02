@@ -2,7 +2,7 @@
 #######################################################
 # util.py
 #
-# This file contains the Stack and Card classes,
+# This file contains the Stack, Card and Counter classes,
 # data structures used throughout our implementation of
 # Scheisskopf.
 #
@@ -67,7 +67,7 @@ class Card:
 				return True
 			else:
 				return False
-        
+
 
 # A general purpose, last in first out (LIFO) data structure.
 # In our implementation, used for representing stacks of Cards.
