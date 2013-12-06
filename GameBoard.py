@@ -102,6 +102,29 @@ class GameBoard:
 	#######################################################
 	#######################################################
 
+	#CHANGES  -  areEqual and inList
+
+	def areEqual(self, card1, card2):
+		card1rank = card1.getRank()
+		card2rank = card2.getRank()
+
+		if card1rank == "A": card1rank = 14
+		if card1rank == "J": card1rank = 11
+		if card1rank == "Q": card1rank = 12
+		if card1rank == "K": card1rank = 13
+
+		if card2rank == "A": card2rank = 14
+		if card2rank == "J": card2rank = 11
+		if card2rank == "Q": card2rank = 12
+		if card2rank == "K": card2rank = 13
+
+		return (card1rank == card2rank and card1.getSuit() == card2.getSuit())
+
+	def inList(self, card, cardList):
+		for listCard in cardList:
+			if self.areEqual(card, listCard): return True
+		return False
+
 	# Returns True iff game is over.
 	def isTerminal(self):
 		for player in self.players:
@@ -137,11 +160,23 @@ class GameBoard:
 			self.pile.push(card)
 		return output
 
+	# # Returns True iff player can legally make swap
+	# def isLegalSwap(self, upCard, handCard, player):
+	# 	upCards = self.upCards[player.getID()]
+	# 	hand = self.hands[player.getID()]
+	# 	if upCard in upCards and handCard in hand:
+	# 		return True
+	# 	else:
+	# 		return False
+
 	# Returns True iff player can legally make swap
+	# CHANGES MADE - uses inList()
 	def isLegalSwap(self, upCard, handCard, player):
+
 		upCards = self.upCards[player.getID()]
 		hand = self.hands[player.getID()]
-		if upCard in upCards and handCard in hand:
+
+		if self.inList(upCard, upCards) and self.inList(handCard, hand):
 			return True
 		else:
 			return False
@@ -303,10 +338,27 @@ class GameBoard:
 		ID = player.getID()
 		upCards = self.upCards[ID]
 		hand = self.hands[ID]
+
+		for card in upCards:
+			if self.areEqual(upSwap, card):
+				upCards.remove(card)
+				hand.append(upSwap)
+				break
+		for card in hand:
+			if self.areEqual(card, handSwap):
+				hand.remove(card)
+				upCards.append(card)
+				break
+
+		"""
+		works for nonHuman agents because comapares object addresses
+
 		upCards.remove(upSwap)
 		hand.append(upSwap)
 		hand.remove(handSwap)
 		upCards.append(handSwap)
+
+		"""
 
 	# Make player draw the necessary number of cards.
 	# Returns number of cards drawn in order to send percepts.

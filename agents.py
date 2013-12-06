@@ -1,4 +1,5 @@
-import util, random, state, sys
+import util, random, sys
+import agentState as st
 import featureExtractor as fe
 
 #######################################################
@@ -505,6 +506,7 @@ class HeuristicAgent:
 	def getDeckSize(self):
 		return str(self.deckSize)
 
+#CHANGES MADE
 class HumanAgent:
 
     def __init__(self, agentID):
@@ -517,21 +519,39 @@ class HumanAgent:
         return self.agentID
 
     def chooseHandCard(self, hand, upCards, playableCards):
+
+    	if playableCards == []: return []
+
         rankToPlay = input("Enter the rank of the card/cards you want to play: ")
+        
+        if rankToPlay == "A": rankToPlay = 14
+        if rankToPlay == "J": rankToPlay = 11
+        if rankToPlay == "Q": rankToPlay = 12
+        if rankToPlay == "K": rankToPlay = 13
+
         quantityToPlay = input("Enter the number of cards you want to play:" )
 
         handToPlay = (rankToPlay, quantityToPlay)
-        action = self.getActionFromInput(playableCards, quantityToPlay)
+        action = self.getActionFromInput(playableCards, handToPlay)
 
         return action
 
     # Choose the lowest playable cards.
     def chooseUpCard(self, upCards, playableCards):
+
+    	if playableCards == []: return []
+
         rankToPlay = input("Enter the rank of the card/cards you want to play: ")
+
+        if rankToPlay == "A": rankToPlay = 14
+        if rankToPlay == "J": rankToPlay = 11
+        if rankToPlay == "Q": rankToPlay = 12
+        if rankToPlay == "K": rankToPlay = 13
+
         quantityToPlay = input("Enter the number of cards you want to play:" )
 
         handToPlay = (rankToPlay, quantityToPlay)
-        action = self.getActionFromInput(playableCards, quantityToPlay)
+        action = self.getActionFromInput(playableCards, handToPlay)
 
         return action
 
@@ -544,6 +564,7 @@ class HumanAgent:
     # else takes keyboard input to choose the cards to be swapped
     # Tuple of chosen cards is returned if it is legal. checked at input stage.
     # If we want to play a card, return (None, cardList).
+    # CHANGES MADE - rank handling
     def chooseSwap(self, hand, upCards, playableCards):
 
         wantToSwap = 0
@@ -553,19 +574,42 @@ class HumanAgent:
 
             if wantToSwap == 1:
                 handCardRank = input("Choose the rank of your hand-card: ")
+               
+                if(handCardRank == "A"): handCardRank = 14
+                if(handCardRank == "J"): handCArdRank = 11
+                if(handCardRank == "Q"): handCardRank = 12
+                if(handCardRank == "K"): handCardRank = 13
+               
+
                 handCardSuit = input("Choose the suit of your hand-card: ")
+
                 upCardRank = input("Choose the rank of your up-card: ")
-                upCardRank = input("Choose the rank of your up-card: ")
+               
+                if(upCardRank == "A"): upCardRank = 14
+                if(upCardRank == "J"): upCArdRank = 11
+                if(upCardRank == "Q"): upCardRank = 12
+                if(upCardRank == "K"): upCardRank = 13
+               
+                upCardSuit = input("Choose the suit of your up-card: ")
                 chosenHandCard = util.Card(handCardRank, handCardSuit)
                 chosenUpCard = util.Card(upCardRank, upCardSuit)
+
+                print (chosenUpCard.toString(), chosenHandCard.toString()) 
+
                 return (chosenUpCard, chosenHandCard)
 
             else:
                 rankToPlay = input("Enter the rank of the card/cards you want to play: ")
+
+                if(rankToPlay == "A"): rankToPlay = 14
+                if(rankToPlay == "J"): rankToPlay = 11
+                if(rankToPlay == "Q"): rankToPlay = 12
+                if(rankToPlay == "K"): rankToPlay = 13
+
                 quantityToPlay = input("Enter the number of cards you want to play:" )
                 handToPlay = (rankToPlay, quantityToPlay)
-                action = self.getActionFromInput(playableCards, quantityToPlay)
-                return action
+                action = self.getActionFromInput(playableCards, handToPlay)
+                return (None, action)
 
     # Update knowledge based on percept.
     def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
@@ -576,7 +620,7 @@ class HumanAgent:
     def getActionFromInput(self, playableCards, handToPlay):
         action = []
         counter = handToPlay[1] #keeps track of the number of cards to be played
-        for card in playAbleCards:
+        for card in playableCards:
             if (card.getRank() == handToPlay[0]):
                 action.append(card)
                 counter -= 1
@@ -591,7 +635,7 @@ class QLearningAgent:
 	# Initialize representations, set constants.
 	def __init__(self, agentID):
 		self.agentID = agentID
-		self.type = "LearningAgent"
+		self.type = "QLearningAgent"
 		self.pileRep = util.Stack()		# Internal representation of the pile.
 		self.discardPileRep = []	# Internal representation of the discard pile.
 		self.opponentHandRep = []	# Internal representation of the opponent's hand.
@@ -599,7 +643,7 @@ class QLearningAgent:
 		self.weights = util.Counter() # Stores weights.
 		self.epsilon = 0.2
 		self.alpha = 0.1
-		self.discount = 1
+		self.discount = 0.9
 		self.featExtractor = fe.featureExtractor()
 		self.inPreGame = True
 
@@ -611,13 +655,17 @@ class QLearningAgent:
 
 	# Look at legal actions and choose best hand cards to play.
 	def chooseHandCard(self, hand, upCards, playableCards):
-		legalActions = self.getLegalActions(hand, upCards, playableCards)
-		return self.getAction(legalActions)
+		state = self.constructState(hand, upCards, playableCards)
+		#legalActions = self.getLegalActions(state)
+		state = st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+		return self.getAction(state)
 
 	# Look at legal actions and choose best up cards to play.
 	def chooseUpCard(self, upCards, playableCards):
-		legalActions = self.getLegalActions(hand, upCards, playableCards)
-		return self.getAction(legalActions)
+		state = self.constructState([], upCards, playableCards)
+		#legalActions = self.getLegalActions(state)
+		state = st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+		return self.getAction(state)
 
 	# Trivial; return.
 	def chooseDownCard(self):
@@ -625,8 +673,9 @@ class QLearningAgent:
 
 	# Look at legal actions and choose best move; swap or take first turn.
 	def chooseSwap(self, hand, upCards, playableCards):
-		legalActions = self.getLegalActions(hand, upCards, playableCards)
-		return self.getAction(legalActions)
+		state = self.constructState(hand, upCards, playableCards)
+		#legalActions = self.getLegalActions(state)
+		return self.getAction(state)
 
 	# Update knowledge based on percept.
 	# cardList only given on "PLAY" move.
@@ -681,7 +730,7 @@ class QLearningAgent:
 	    """
 	    
 	    # All possible actions from state.
-	    actions = self.getLegalActions(playableCards)
+	    actions = self.getLegalActions(state)
 	    # Terminal test.
 	    if not actions:
 	      return 0.0 
@@ -694,7 +743,7 @@ class QLearningAgent:
 	          
 	    return maxQValue
 
-  	def getPolicy(self, actions):
+  	def getPolicy(self, state):
 	    """
 	      Compute the best action to take in a state.  Note that if there
 	      are no legal actions, which is the case at the terminal state,
@@ -702,7 +751,7 @@ class QLearningAgent:
 	    """
 	    "*** YOUR CODE HERE ***"
 
-	    state = State(hand, upCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+	    actions = self.getLegalActions(state)
 
 	    # Terminal test.
 	    if actions == []:
@@ -724,7 +773,7 @@ class QLearningAgent:
 	    return random.choice(maximizingActions)
     
 
-  	def getAction(self, legalActions):
+  	def getAction(self, state):
 	    """
 	      Compute the action to take in the current state.  With
 	      probability self.epsilon, we should take a random action and
@@ -735,12 +784,16 @@ class QLearningAgent:
 	      HINT: You might want to use util.flipCoin(prob)
 	      HINT: To pick randomly from a list, use random.choice(list)
 	    """
+	    legalActions = self.getLegalActions(state)
 
-	    explore = util.flipCoin(self.epsilon)
+	    if legalActions == []:
+	    	return []
+
+		explore = util.flipCoin(self.epsilon)
 	    if explore:
-	    	action = random.choice(legalActions)
-	    else: 
-	    	action = self.getPolicy(legalActions)
+		    action = random.choice(legalActions)
+		else:
+		    action = self.getPolicy(state)
 
 	    return action
 
@@ -780,7 +833,10 @@ class QLearningAgent:
 	      self.weights[feature] += self.alpha*correction*featureDict[feature]
 
 	# Returns a list of lists, each inner list representing a legal action (swaps included).
-	def getLegalActions(self, hand, upCards, playableCards):
+	def getLegalActions(self, state):
+		hand = state.getHand()
+		upCards = state.getUpCards()
+		playableCards = state.getPlayableCards()
 		actions = []
 		
 		if self.inPreGame == True:
@@ -797,9 +853,12 @@ class QLearningAgent:
 		for card in playableCards:
 			rank = card.getRank()
 			listsOfRanks[rank].append(card)
+		for rank in listsOfRanks.keys():
+			if not listsOfRanks[rank] == []:
+				actions.append(listsOfRanks[rank])
 
-		for rank in listOfRanks.keys():
-			rankList = listOfRanks[rank]
+		for rank in listsOfRanks.keys():
+			rankList = listsOfRanks[rank]
 			for index in range(0, len(rankList)):
 				tempList = []
 				for i in range(0, index):
@@ -809,7 +868,11 @@ class QLearningAgent:
 				else:
 					actions.append(tempList)
 
+		print "LEGAL ACTIONS: " + str(actions)
 		return actions
+
+	def constructState(self, hand, upCards, playableCards):
+		return st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
 
 
 

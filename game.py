@@ -30,6 +30,8 @@ class Game:
 			self.playerTwo = agents.GreedyAgent(2)
 		elif playerTwoType == "HEURISTIC":
 			self.playerTwo = agents.HeuristicAgent(2)
+		elif playerTwoType == "QLEARNER":
+			self.playerTwo = agents.QLearningAgent(2)
 		else:
 			print "INVALID AGENT TYPE"
 
@@ -95,12 +97,18 @@ class Game:
 
 	# Moves the game forward a single turn and changes activePlayer.
 	def takeTurn(self):
-		# Check to see if the game is ended.
 		if self.gameBoard.isTerminal():
-			self.ended = True
-			self.changeActivePlayer()
-			self.winner = self.activePlayer.getID()	
 			return
+
+		if self.playerTwo.getType() == "QLearningAgent":
+			hand = self.gameBoard.viewHand(self.playerTwo)
+			upCards = self.gameBoard.viewUpCards(self.playerTwo)
+			playableHand = self.gameBoard.getPlayableHandCards(self.playerTwo)
+			playableUpCards = self.gameBoard.getPlayableUpCards(self.playerTwo)
+			if playableHand == []: 
+				state = self.playerTwo.constructState(hand, upCards, playableUpCards)
+			else:
+				state = self.playerTwo.constructState(hand, upCards, playableHand)
 
 		# Update pileCard.
 		self.pileCard = self.gameBoard.peekPile()
@@ -124,21 +132,49 @@ class Game:
 
 		# If we're in the pregame, prompt swap from activePlayer.
 		if self.inPregame:
-			self.swapPlay()
+			action = self.swapPlay()
 
 		# If we're doing normal turn taking, make activePlayer take a turn.	
 		else:
 			# Down cards are available for player. No need to actually choose; random anyway.
 			if self.gameBoard.downCardsPlayable(self.activePlayer.getID()):
 				self.downCardPlay()
+				action = "DOWNCARD"
 
 			# Up cards are available for player.
 			elif self.gameBoard.upCardsPlayable(self.activePlayer.getID()):
-				self.upCardPlay()
+				action = self.upCardPlay()
 
 			# Player still has a hand to play.
 			else:
-				self.handCardsPlay()
+				action = self.handCardsPlay()
+
+		# Check to see if the game is ended.
+		if self.gameBoard.isTerminal():
+			self.ended = True
+			self.changeActivePlayer()
+			self.winner = self.activePlayer.getID()	
+
+		# Update Q-learner.
+		if self.playerTwo.getType() == "QLearningAgent":
+			if self.gameBoard.isTerminal():
+				if self.winner == self.playerTwo:
+					reward = 1
+				elif self.winner == self.playerOne:
+					reward = -1
+				else:
+					reward = 0
+			else:
+				reward = 0
+
+			hand = self.gameBoard.viewHand(self.playerTwo)
+			upCards = self.gameBoard.viewUpCards(self.playerTwo)
+			if hand == []:
+				playableCards = self.gameBoard.getPlayableUpCards(self.playerTwo)
+			else:
+				playableCards = self.gameBoard.getPlayableHandCards(self.playerTwo)
+			nextState = self.playerTwo.constructState(hand, upCards, playableCards)
+			self.playerTwo.update(state, action, nextState, reward)
 
 	# Hand over turn-taking control.
 	def changeActivePlayer(self):
@@ -164,9 +200,8 @@ class Game:
 		# Check to see if swap is actually a request to play.
 		# If so, submit that action.
 		if upCard == None:
-			self.handCardsPlay(handCards)
 			self.inPregame = False
-			return
+			return (None, self.handCardsPlay(handCards))	
 
 		# Check legality of swap and apply if legal.
 		else:
@@ -174,6 +209,7 @@ class Game:
 				self.gameBoard.applySwap(swap, self.activePlayer)
 				self.sendPercepts("SWAP", self.activePlayer.getID(), upCard, handCards)
 				self.changeActivePlayer()
+				return swap
 						
 	# Handles the playing of a down card.
 	def downCardPlay(self):
@@ -205,16 +241,20 @@ class Game:
 				self.gameBoard.pileToHand(self.activePlayer)
 				self.sendPercepts("PICKUP", self.activePlayer.getID())
 				self.changeActivePlayer()
-				return
+				return []
 			else:
-				return
+				print "INVALID UP CARD PLAY: []"
+				return 
 
 		# Check to see if action is valid. If so, play cards.
 		if self.gameBoard.isLegalUpCardPlay(action, self.activePlayer):
 			self.gameBoard.upCardsToPile(self.activePlayer, action)
 			self.sendPercepts("PLAY", self.activePlayer.getID(), action)
 			self.changeActivePlayer()
-			return
+			return action
+
+		else:
+			print "INVALID UP CARD PLAY"
 
 	# Handles the playing of hand cards.
 	def handCardsPlay(self, action=None):
@@ -230,9 +270,9 @@ class Game:
 				self.gameBoard.pileToHand(self.activePlayer)
 				self.sendPercepts("PICKUP", self.activePlayer.getID())
 				self.changeActivePlayer()
-				return
+				return []
 			else:
-				print "ILLEGAL []"
+				print "INVALID HAND CARD PLAY: []"
 				return
 
 		# Check to see if action is valid. If so, play cards.
@@ -241,6 +281,6 @@ class Game:
 			self.sendPercepts("PLAY", self.activePlayer.getID(), action)
 			self.sendPercepts("DRAW", self.activePlayer.getID(), numDrawn)
 			self.changeActivePlayer()
-			return
+			return action
 		else:
-			print "ILLEGAL MOVE"
+			print "INVALID HAND CARD PLAY"

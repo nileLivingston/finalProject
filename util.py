@@ -1,3 +1,5 @@
+import random
+
 #######################################################
 #######################################################
 # util.py
@@ -9,6 +11,10 @@
 #######################################################
 #######################################################
 
+# Returns the result of flipping a coin with head probability p.
+def flipCoin( p ):
+  r = random.random()
+  return r < p 
 
 # Represents a single card object with rank, suit, and wildness.
 class Card:
