@@ -664,7 +664,7 @@ class QLearningAgent:
 	def chooseUpCard(self, upCards, playableCards):
 		state = self.constructState([], upCards, playableCards)
 		#legalActions = self.getLegalActions(state)
-		state = st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+		state = st.State([], upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
 		return self.getAction(state)
 
 	# Trivial; return.
@@ -771,31 +771,28 @@ class QLearningAgent:
 
 	    # Choose randomly amongst tied actions. Random selection improves performance (value exploration).
 	    return random.choice(maximizingActions)
-    
 
   	def getAction(self, state):
-	    """
-	      Compute the action to take in the current state.  With
-	      probability self.epsilon, we should take a random action and
-	      take the best policy action otherwise.  Note that if there are
-	      no legal actions, which is the case at the terminal state, you
-	      should choose None as the action.
+		"""
+		Compute the action to take in the current state.  With
+		probability self.epsilon, we should take a random action and
+		take the best policy action otherwise.  Note that if there are
+		no legal actions, which is the case at the terminal state, you
+		should choose None as the action.
 
-	      HINT: You might want to use util.flipCoin(prob)
-	      HINT: To pick randomly from a list, use random.choice(list)
-	    """
-	    legalActions = self.getLegalActions(state)
+		HINT: You might want to use util.flipCoin(prob)
+		HINT: To pick randomly from a list, use random.choice(list)
+		"""
+		legalActions = self.getLegalActions(state)
 
-	    if legalActions == []:
-	    	return []
+		if legalActions == []:
+			return []
 
 		explore = util.flipCoin(self.epsilon)
-	    if explore:
-		    action = random.choice(legalActions)
+		if explore:
+			return random.choice(legalActions)
 		else:
-		    action = self.getPolicy(state)
-
-	    return action
+			return self.getPolicy(state)
 
  	def getQValue(self, state, action):
 	    """
@@ -860,15 +857,35 @@ class QLearningAgent:
 		for rank in listsOfRanks.keys():
 			rankList = listsOfRanks[rank]
 			for index in range(0, len(rankList)):
-				tempList = []
-				for i in range(0, index):
-					tempList.append(rankList[i])
+				subsetList = []
+				for i in range(0, index+1):
+					subsetList.append(rankList[i])
 				if self.inPreGame:
-					actions.append((None, tempList))
+					actions.append((None, subsetList))
 				else:
-					actions.append(tempList)
+					actions.append(subsetList)
 
-		print "LEGAL ACTIONS: " + str(actions)
+		output = "LEGAL ACTIONS: {"
+		for action in actions:
+			if isinstance(action, tuple):
+				output += "("
+				if action[0] == None: 
+					output += "None, ["
+					for card in action[1]:
+						output += card.toString() + ", "
+					output += "]"
+				else: 
+					output += action[0].toString() + ", " + action[1].toString()
+				output += ")"
+			else:
+				output += "["
+				for card in action:
+					output += card.toString() + ", "
+				output += "]"
+			output += ")"
+		output += "}"
+		print output
+
 		return actions
 
 	def constructState(self, hand, upCards, playableCards):
