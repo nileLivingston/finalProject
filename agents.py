@@ -633,19 +633,20 @@ class HumanAgent:
 class QLearningAgent:
 
 	# Initialize representations, set constants.
-	def __init__(self, agentID):
+	def __init__(self, agentID, initialWeights):
 		self.agentID = agentID
 		self.type = "QLearningAgent"
 		self.pileRep = util.Stack()		# Internal representation of the pile.
 		self.discardPileRep = []	# Internal representation of the discard pile.
 		self.opponentHandRep = []	# Internal representation of the opponent's hand.
 		self.deckSize = 52 - 18
-		self.weights = util.Counter() # Stores weights.
+		self.weights = initialWeights # Stores weights.
 		self.epsilon = 0.2
 		self.alpha = 0.1
 		self.discount = 0.9
 		self.featExtractor = fe.featureExtractor()
 		self.inPreGame = True
+		self.gameEnded = False
 
 	def getID(self):
 		return self.agentID
@@ -653,18 +654,24 @@ class QLearningAgent:
 	def getType(self):
 		return self.type
 
+	def getWeights(self):
+		return self.weights
+
+	def setEnded(self, ended):
+		self.gameEnded = ended
+
 	# Look at legal actions and choose best hand cards to play.
 	def chooseHandCard(self, hand, upCards, playableCards):
-		state = self.constructState(hand, upCards, playableCards)
+		state = self.constructState(hand, upCards, playableCards, self.gameEnded)
 		#legalActions = self.getLegalActions(state)
-		state = st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+		#state = st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
 		return self.getAction(state)
 
 	# Look at legal actions and choose best up cards to play.
 	def chooseUpCard(self, upCards, playableCards):
-		state = self.constructState([], upCards, playableCards)
+		state = self.constructState([], upCards, playableCards, self.gameEnded)
 		#legalActions = self.getLegalActions(state)
-		state = st.State([], upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+		#state = st.State([], upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
 		return self.getAction(state)
 
 	# Trivial; return.
@@ -673,7 +680,7 @@ class QLearningAgent:
 
 	# Look at legal actions and choose best move; swap or take first turn.
 	def chooseSwap(self, hand, upCards, playableCards):
-		state = self.constructState(hand, upCards, playableCards)
+		state = self.constructState(hand, upCards, playableCards, self.gameEnded)
 		#legalActions = self.getLegalActions(state)
 		return self.getAction(state)
 
@@ -732,8 +739,10 @@ class QLearningAgent:
 	    # All possible actions from state.
 	    actions = self.getLegalActions(state)
 	    # Terminal test.
-	    if not actions:
+	    if state.isTerminal():
 	      return 0.0 
+	    elif actions == []:
+	    	return self.getQValue(state, [])
 	    maxQValue = float("-inf")
 	    # Find maximum QValue over all actions.
 	    for action in actions:
@@ -754,7 +763,7 @@ class QLearningAgent:
 	    actions = self.getLegalActions(state)
 
 	    # Terminal test.
-	    if actions == []:
+	    if actions == [] or state.isTerminal():
 	    	return []
 	    maxQValue = float("-inf")
 	    # Keep a list of actions with equally maximal QValues. 
@@ -790,7 +799,8 @@ class QLearningAgent:
 
 		explore = util.flipCoin(self.epsilon)
 		if explore:
-			return random.choice(legalActions)
+			action = random.choice(legalActions)
+			return action
 		else:
 			return self.getPolicy(state)
 
@@ -823,7 +833,12 @@ class QLearningAgent:
 	    featureVector = featureDict.keys()
 
 	    # Weight correction value.
+	    print "Reward: " + str(reward)
+	    print "Gamma: " + str(self.discount)
+	    print "Next State Value: " + str(self.getValue(nextState))
+	    print "Old State Value: " + str(self.getQValue(state, action))
 	    correction = (reward + self.discount*self.getValue(nextState)) - self.getQValue(state, action)
+	    print "Correction: " + str(correction)
 
 	    # Update all weights.
 	    for feature in featureVector:
@@ -850,9 +865,9 @@ class QLearningAgent:
 		for card in playableCards:
 			rank = card.getRank()
 			listsOfRanks[rank].append(card)
-		for rank in listsOfRanks.keys():
-			if not listsOfRanks[rank] == []:
-				actions.append(listsOfRanks[rank])
+		#for rank in listsOfRanks.keys():
+			#if not listsOfRanks[rank] == []:
+				#actions.append(listsOfRanks[rank])
 
 		for rank in listsOfRanks.keys():
 			rankList = listsOfRanks[rank]
@@ -865,31 +880,31 @@ class QLearningAgent:
 				else:
 					actions.append(subsetList)
 
-		output = "LEGAL ACTIONS: {"
-		for action in actions:
-			if isinstance(action, tuple):
-				output += "("
-				if action[0] == None: 
-					output += "None, ["
-					for card in action[1]:
-						output += card.toString() + ", "
-					output += "]"
-				else: 
-					output += action[0].toString() + ", " + action[1].toString()
-				output += ")"
-			else:
-				output += "["
-				for card in action:
-					output += card.toString() + ", "
-				output += "]"
-			output += ")"
-		output += "}"
-		print output
+		# output = "LEGAL ACTIONS: {"
+		# for action in actions:
+		# 	if isinstance(action, tuple):
+		# 		output += "("
+		# 		if action[0] == None: 
+		# 			output += "None, ["
+		# 			for card in action[1]:
+		# 				output += card.toString() + ", "
+		# 			output += "]"
+		# 		else: 
+		# 			output += action[0].toString() + ", " + action[1].toString()
+		# 		output += ")"
+		# 	else:
+		# 		output += "["
+		# 		for card in action:
+		# 			output += card.toString() + ", "
+		# 		output += "]"
+		# 	output += ")"
+		# output += "}"
+		# print output
 
 		return actions
 
-	def constructState(self, hand, upCards, playableCards):
-		return st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+	def constructState(self, hand, upCards, playableCards, isTerminal):
+		return st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize, isTerminal)
 
 
 

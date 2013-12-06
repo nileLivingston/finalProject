@@ -4,7 +4,7 @@
 # information available to the agent.
 class State:
 
-	def __init__(self, hand, upCards, playableCards, oppHandRep, pileRep, discardRep, deckSize):
+	def __init__(self, hand, upCards, playableCards, oppHandRep, pileRep, discardRep, deckSize, terminal):
 		self.hand = hand
 		self.upCards = upCards
 		self.playableCards = playableCards
@@ -12,6 +12,7 @@ class State:
 		self.pileRep = pileRep
 		self.discardRep = discardRep
 		self.deckSize = deckSize
+		self.terminal = terminal
 
 	def getHand(self):
 		return self.hand
@@ -33,3 +34,6 @@ class State:
 
 	def getDeckSize(self):
 		return self.deckSize
+
+	def isTerminal(self):
+		return self.terminal

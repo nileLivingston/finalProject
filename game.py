@@ -8,7 +8,7 @@ import agents
 class Game:
 
 	# Construct players and GameBoard.
-	def __init__(self, playerOneType, playerTwoType):
+	def __init__(self, playerOneType, playerTwoType, initialWeights=None):
 		self.inPregame = True
 
 		# Construct player 1.
@@ -31,7 +31,7 @@ class Game:
 		elif playerTwoType == "HEURISTIC":
 			self.playerTwo = agents.HeuristicAgent(2)
 		elif playerTwoType == "QLEARNER":
-			self.playerTwo = agents.QLearningAgent(2)
+			self.playerTwo = agents.QLearningAgent(2, initialWeights)
 		else:
 			print "INVALID AGENT TYPE"
 
@@ -89,6 +89,9 @@ class Game:
 	def isEnded(self):
 		return self.ended
 
+	def getWeights(self):
+		return self.playerTwo.getWeights()
+
 	#######################################################
 	#######################################################
 	# MUTATOR METHODS:
@@ -97,6 +100,10 @@ class Game:
 
 	# Moves the game forward a single turn and changes activePlayer.
 	def takeTurn(self):
+
+		if self.playerTwo.getType() == "QLearningAgent": 
+				print "Weights: " + str(self.playerTwo.getWeights())
+
 		if self.gameBoard.isTerminal():
 			return
 
@@ -106,9 +113,9 @@ class Game:
 			playableHand = self.gameBoard.getPlayableHandCards(self.playerTwo)
 			playableUpCards = self.gameBoard.getPlayableUpCards(self.playerTwo)
 			if playableHand == []: 
-				state = self.playerTwo.constructState(hand, upCards, playableUpCards)
+				state = self.playerTwo.constructState(hand, upCards, playableUpCards, self.gameBoard.isTerminal())
 			else:
-				state = self.playerTwo.constructState(hand, upCards, playableHand)
+				state = self.playerTwo.constructState(hand, upCards, playableHand, self.gameBoard.isTerminal())
 
 		# Update pileCard.
 		self.pileCard = self.gameBoard.peekPile()
@@ -154,13 +161,15 @@ class Game:
 			self.ended = True
 			self.changeActivePlayer()
 			self.winner = self.activePlayer.getID()	
+			if self.playerTwo.getType() == "QLearningAgent":
+				self.playerTwo.setEnded(True)
 
 		# Update Q-learner.
 		if self.playerTwo.getType() == "QLearningAgent":
 			if self.gameBoard.isTerminal():
-				if self.winner == self.playerTwo:
+				if self.winner == self.playerTwo.getID():
 					reward = 1
-				elif self.winner == self.playerOne:
+				elif self.winner == self.playerOne.getID():
 					reward = -1
 				else:
 					reward = 0
@@ -173,7 +182,7 @@ class Game:
 				playableCards = self.gameBoard.getPlayableUpCards(self.playerTwo)
 			else:
 				playableCards = self.gameBoard.getPlayableHandCards(self.playerTwo)
-			nextState = self.playerTwo.constructState(hand, upCards, playableCards)
+			nextState = self.playerTwo.constructState(hand, upCards, playableCards, self.gameBoard.isTerminal())
 			self.playerTwo.update(state, action, nextState, reward)
 
 	# Hand over turn-taking control.

@@ -1,4 +1,5 @@
 import game as g
+import util
 
 # Used to run multiple games at a time and assess agent performance.
 class Experiment:
@@ -23,10 +24,11 @@ class Experiment:
 		print "##############################"
 		print "\n"
 
+		weights = util.Counter()
 		# Run <self.trials> games, each time recording who won and number of turns. 
 		for i in range(1, self.trials+1):
 			turns = 0
-			game = g.Game(self.playerOneType, self.playerTwoType)
+			game = g.Game(self.playerOneType, self.playerTwoType, weights)
 			gameBoard = game.getGameBoard()
 		
 			if self.printTrials:
@@ -40,6 +42,9 @@ class Experiment:
 				turns += 1
 				if self.printTrials:
 					game.printState()
+
+				weights = game.getWeights()
+			print weights
 
 			# Record the winner and number of turns.
 			winner = game.getWinner()
