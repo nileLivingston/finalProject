@@ -28,26 +28,20 @@ class Game:
 
 		# Construct player 2.
 		if playerTwoType == "RANDOM":
-			self.playerTwo = agents.RandomAgent(self.playerTwoID)
+			self.playerTwo = agents.RandomAgent(2)
 		elif playerTwoType == "GREEDY":
-			self.playerTwo = agents.GreedyAgent(self.playerTwoID)
+			self.playerTwo = agents.GreedyAgent(2)
 		elif playerTwoType == "HEURISTIC":
-			self.playerTwo = agents.HeuristicAgent(self.playerTwoID)
+			self.playerTwo = agents.HeuristicAgent(2)
 		elif playerTwoType == "QLEARNER":
-			self.playerTwo = agents.QLearningAgent(self.playerTwoID, initialWeights)
+			self.playerTwo = agents.QLearningAgent(2)
 		else:
 			print "INVALID AGENT TYPE"
+
 
 		self.players = [self.playerOne, self.playerTwo]
 		self.gameBoard = gb.GameBoard(self.players)
 
-		if self.playerTwo.getType() == "QLearningAgent":
-			hand = self.gameBoard.viewHand(self.playerTwo)
-			upCards = self.gameBoard.viewUpCards(self.playerTwo)
-			playableHand = self.gameBoard.getPlayableHandCards(self.playerTwo)
-			playableUpCards = self.gameBoard.getPlayableUpCards(self.playerTwo)
-			self.state = self.playerTwo.constructState(hand, upCards, playableHand, self.gameBoard.isTerminal())
-		
 		# pass in the agents to the graphics
 		self.graphics.setAgents(self.players)
 

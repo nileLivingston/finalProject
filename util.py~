@@ -14,17 +14,7 @@ import random
 # Returns the result of flipping a coin with head probability p.
 def flipCoin( p ):
   r = random.random()
-  return r < p
-
-# Returns a string representation of a list of cards.
-def cardListToString(cardList):
-  if cardList == []:
-    return "[]"
-  else:
-    output = "[" 
-    for card in cardList:
-      output += card.toString() + ","
-    return output + "]" 
+  return r < p 
 
 # Represents a single card object with rank, suit, and wildness.
 class Card:

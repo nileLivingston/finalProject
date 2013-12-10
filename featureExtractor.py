@@ -1,5 +1,6 @@
 import util
 
+# Extracts a feature vector from a Q-learner's state representation.
 class featureExtractor:
 
 	def __init__(self):
@@ -20,35 +21,33 @@ class featureExtractor:
 		numCardsInAction = len(action)
 
 		# Compute the number of hand cards playable on the newly played card(s).
-		if isinstance(action, tuple):
+
+		if action == "DOWNCARD":
+			numPlayableOn = 0
+
+		elif hand == []:
+			numPlayableOn = 0
+
+		elif isinstance(action, tuple):
 			if action[0] == None:
 				newHand = list(hand)
 
-				#print "Hand: " + util.cardListToString(hand)
-				#print "Action : " + util.cardListToString(action[1])
-				#print "New Hand: " + util.cardListToString(newHand)
+			for card in action[1]:
+				newHand.remove(card)
 
-
-				for card in action[1]:
-					newHand.remove(card)
-
-
-
-				newPileCard = action[1][0]
-				if newPileCard == 10 or newPileCard == 3:
-					numPlayableOn = len(newHand)
-				else:
-					numPlayableOn = 0
-					for card in newHand:
-						if card.isPlayableOn(newPileCard):
-							numPlayableOn += 1
-
+			newPileCard = action[1][0]
+			if newPileCard == 10 or newPileCard == 3:
+				numPlayableOn = len(newHand)
 			else:
-				numPlayableOn = len(hand)
+				numPlayableOn = 0
+				for card in newHand:
+					if card.isPlayableOn(newPileCard):
+						numPlayableOn += 1
 
+					else:
+						numPlayableOn = len(hand)
 		elif action == []:
-			return 0
-
+			numPlayableOn = 0
 		else:
 			newPileCard = action[0]
 			newHand = list(hand)
@@ -59,16 +58,26 @@ class featureExtractor:
 			for card in newHand:
 				if card.isPlayableOn(newPileCard):
 					numPlayableOn += 1
-
-
+			
+		# FEATURES:
 		output = dict()
+		# Size of hand.
 		output["hand-size"] = handSize
+
+		# Size of opponent's hand.
 		output["opp-hand-size"] = oppHandSize
+
+		# Size of pile.
 		output["pile-size"] = pileSize
+
+		# Size of discard pile.
 		output["discard-size"] = discardSize
+
+		# Size of deck.
 		output["deck-size"] = deckSize
+
+		# Number of cards in hand playable on pile after action.
 		output["num-playable-on"] = numPlayableOn
-		#output["num-cards-in-action"] = numCardsInAction
 		return output
 
 	def maxCardInHand(self, state):

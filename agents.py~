@@ -50,6 +50,7 @@ class Agent:
 	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
 		return
 
+
 # An agent that chooses actions randomly.
 class RandomAgent:
 
@@ -100,7 +101,7 @@ class RandomAgent:
 			rank = random.choice(playableCards).getRank()
 			cardsToPlay = self.getSomeOfRank(rank, playableCards)
 			return (None, cardsToPlay)
-
+		
 		else:
 			# Return a valid swap.
 			upSwap = random.choice(upCards)
@@ -111,21 +112,29 @@ class RandomAgent:
 	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
 		return
 
-        #######################################################
-        #######################################################
+	#######################################################
+	#######################################################
 	# HELPER METHODS
-        #######################################################
-        #######################################################
+	#######################################################
+	#######################################################
+
+	# # Return a list of all cards in playableCards of a certain rank.
+	# def getAllOfRank(self, rank, playableCards):
+	# 	output = []
+	# 	for card in playableCards:
+	# 		if card.getRank() == rank:
+	# 			output.append(card)
+	# 	return output
 
 	# Return a list of cards in playableCards of a certain rank.
 	# Must return at least one card.
 	def getSomeOfRank(self, rank, playableCards):
 		output = []
-
+		pickedOne = False
 		for card in playableCards:
-			if output == [] and card.getRank() == rank:
+			if not pickedOne and card.getRank() == rank:
 				output.append(card)
-			elif not output == [] and card.getRank() == rank:
+			elif pickedOne and card.getRank() == rank:
 				choice = random.choice([0, 1])
 				if choice == 1:
 					output.append(card)
@@ -497,180 +506,255 @@ class HeuristicAgent:
 	def getDeckSize(self):
 		return str(self.deckSize)
 
+#CHANGES MADE
 class HumanAgent:
 
-    def __init__(self, agentID):
-        self.agentID = agentID
-        self.pileRep = util.Stack()        # Internal representation of the pile.
-        self.discardPileRep = {}        # Internal representation of the discard pile.
-        self.opponentHandRep = {}        # Internal representation of the opponent's hand.
+	def __init__(self, agentID):
+		self.agentID = agentID
+		self.type = "HumanAgent"
+		self.pileRep = util.Stack()        # Internal representation of the pile.
+		self.discardPileRep = {}        # Internal representation of the discard pile.
+		self.opponentHandRep = {}        # Internal representation of the opponent's hand.
+	def getType(self):
+		return self.type
 
-    def getID(self):
-        return self.agentID
+	def getID(self):
+		return self.agentID
 
-    def chooseHandCard(self, hand, upCards, playableCards):
+	def chooseHandCard(self, hand, upCards, playableCards):
 
-    	if playableCards == []: return []	#returns an empty list if there are no playable cards
-
-        rankToPlay = raw_input("Enter the rank of the card/cards you want to play: ") #returns string
-
-        rankToPlay = rankToPlay.upper()
+		if playableCards == []: return []
+		validInput = False
+		while not validInput:
+			try:    
+				validInput = True
+				rankToPlay = raw_input("Enter the rank of the card/cards you want to play: ")
+				if rankToPlay == "": validInput = False
+				rankToPlay = rankToPlay.upper()
+			except:
+				validInput = False
+				print "INVALID INPUT"
         
-        if rankToPlay == "A": rankToPlay = 14
-        if rankToPlay == "J": rankToPlay = 11
-        if rankToPlay == "Q": rankToPlay = 12
-        if rankToPlay == "K": rankToPlay = 13
+		if rankToPlay == "A": rankToPlay = 14
+		if rankToPlay == "J": rankToPlay = 11
+		if rankToPlay == "Q": rankToPlay = 12
+		if rankToPlay == "K": rankToPlay = 13
 
-        rankToPlay = int(rankToPlay)
+		rankToPlay = int(rankToPlay)
 
-        quantityToPlay = raw_input("Enter the number of cards you want to play:" )
-        quantityToPlay = int(quantityToPlay)
+		validInput = False
+		
+		while not validInput:
+			try:    
+				validInput = True
+				quantityToPlay = raw_input("Enter the number of cards you want to play:" )
+				if quantityToPlay == "": validInput = False
+				quantityToPlay = int(quantityToPlay)
+			except:
+				validInput = False
+				print "INVALID INPUT"
 
-        handToPlay = (rankToPlay, quantityToPlay)
-        action = self.getActionFromInput(playableCards, handToPlay) #converts a tuple(rank, quantity) to an action
+		handToPlay = (rankToPlay, quantityToPlay)
+		action = self.getActionFromInput(playableCards, handToPlay)
+		
+		return action
 
-        return action
+	# Choose the lowest playable cards.
+	def chooseUpCard(self, upCards, playableCards):
 
-    # Choose the lowest playable cards.
-    def chooseUpCard(self, upCards, playableCards):
+		if playableCards == []: return []
+		validInput = False
+		while not validInput:
+			try:    
+				validInput = True
+				rankToPlay = raw_input("Enter the rank of the card/cards you want to play: ")
+				if rankToPlay == "": validInput = False
+				rankToPlay = rankToPlay.upper()
+			except:
+				validInput = False
+				print "INVALID INPUT"
 
-    	if playableCards == []: return []
+		if rankToPlay == "A": rankToPlay = 14
+		if rankToPlay == "J": rankToPlay = 11
+		if rankToPlay == "Q": rankToPlay = 12
+		if rankToPlay == "K": rankToPlay = 13
+		
+		rankToPlay = int(rankToPlay)
 
-        rankToPlay = raw_input("Enter the rank of the card/cards you want to play: ")
-
-        rankToPlay = rankToPlay.upper()
-
-        if rankToPlay == "A": rankToPlay = 14
-        if rankToPlay == "J": rankToPlay = 11
-        if rankToPlay == "Q": rankToPlay = 12
-        if rankToPlay == "K": rankToPlay = 13
-
-        rankToPlay = int(rankToPlay)
-
-        quantityToPlay = raw_input("Enter the number of cards you want to play:" )
-        quantityToPlay = int(quantityToPlay)
+		validInput = False
+		while not validInput:
+			try:    
+				validInput = True
+				quantityToPlay = raw_input("Enter the number of cards you want to play:" )
+				if quantityToPlay == "": validInput = False				
+				quantityToPlay = int(quantityToPlay)
+			except:
+				validInput = False
+				print "INVALID INPUT"
 
 
-        handToPlay = (rankToPlay, quantityToPlay)
-        action = self.getActionFromInput(playableCards, handToPlay) #converts a tuple(rank, quantity) to an action
+		handToPlay = (rankToPlay, quantityToPlay)
+		action = self.getActionFromInput(playableCards, handToPlay)
 
-        return action
+		return action
 
-    # Trivial; return.
-    def chooseDownCard(self):
-        raw_input("Press any key to play a down card: ")
+	# Trivial; return.
+	def chooseDownCard(self):
+		raw_input("Press return key to play a down card.")
 
-    # First input decide's whether to swap or to play.
-    # if play, calls the chooseHandCard() function
-    # else takes keyboard input to choose the cards to be swapped
-    # Tuple of chosen cards is returned if it is legal. checked at input stage.
-    # If we want to play a card, return (None, cardList).
-    # CHANGES MADE - rank handling
-    def chooseSwap(self, hand, upCards, playableCards):
+	# First input decide's whether to swap or to play.
+	# if play, calls the chooseHandCard() function
+	# else takes keyboard input to choose the cards to be swapped
+	# Tuple of chosen cards is returned if it is legal. checked at input stage.
+	# If we want to play a card, return (None, cardList).
+	# CHANGES MADE - rank handling
+	def chooseSwap(self, hand, upCards, playableCards):
+		
+		wantToSwap = 0
+		validInput = False
+		while(wantToSwap != 1 or wantToSwap != 9):
 
-        wantToSwap = 0
-        while(wantToSwap != 1 or wantToSwap != 9):
+			while not validInput:
+				try:    
+					validInput = True
+					wantToSwap = raw_input("Enter 1 to make a swap or 9 to take the first turn.")
+					if wantToSwap == "": validInput = False					
+					wantToSwap = int(wantToSwap)
+				except:
+					validInput = False
+					print "INVALID INPUT"
+			if validInput: break
 
-            wantToSwap = raw_input("Enter 1 to make a swap or 9 to take the first turn.")
-            wantToSwap = int(wantToSwap)
+		if wantToSwap == 1:
+		
+			validInput = False
+			while not validInput:
+				try:    
+					validInput = True
+					handCardRank = raw_input("Choose the rank of your hand-card: ")
+					if handCardRank == "": validInput = False					
+					handCardRank = handCardRank.upper()
+				except:
+					validInput = False
+					print "INVALID INPUT"
 
-            if wantToSwap == 1:  #player choses to make swap
-                handCardRank = raw_input("Choose the rank of your hand-card: ")
-
-                handCardRank = handCardRank.upper()
                
-                if(handCardRank == "A"): handCardRank = 14
-                if(handCardRank == "J"): handCardRank = 11
-                if(handCardRank == "Q"): handCardRank = 12
-                if(handCardRank == "K"): handCardRank = 13
-
-                handCardRank = str(handCardRank)
+			if(handCardRank == "A"): handCardRank = 14
+			if(handCardRank == "J"): handCardRank = 11
+			if(handCardRank == "Q"): handCardRank = 12
+			if(handCardRank == "K"): handCardRank = 13
                
-                for card in hand:	#checks players hand for card with the same rank
-                	if str(card.getRank()) == handCardRank:
-                		handCardSuit = card.getSuit()
-                		break
-                	else:
-                		handCardSuit = "XYZ"	#card suit not a match for 'card'. returns suit as XYZ if there is no match
+			handCardRank = str(handCardRank)
 
-                upCardRank = raw_input("Choose the rank of your up-card: ")
+			for card in hand:
+				if str(card.getRank()) == handCardRank:
+					handCardSuit = card.getSuit()
+					break
+				else:
+					handCardSuit = "XYZ"
+
+			validInput = False
+			while not validInput:
+				try:    
+					validInput = True
+					upCardRank = raw_input("Choose the rank of your up-card: ")
+					if upCardRank == "": validInput = False					
+					upCardRank = upCardRank.upper()
+				except:
+					validInput = False
+					print "INVALID INPUT"
+
+			
+			if(upCardRank == "A"): upCardRank = 14
+			if(upCardRank == "J"): upCardRank = 11
+			if(upCardRank == "Q"): upCardRank = 12
+			if(upCardRank == "K"): upCardRank = 13
+
+			upCardRank = str(upCardRank)
+
+			for upCard in upCards:
+				if str(upCard.getRank()) == upCardRank:
+					upCardSuit = upCard.getSuit()
+					break
+				else:
+					upCardSuit = "XYZ"
                
-                upCardRank = upCardRank.upper()
+			chosenHandCard = util.Card(int(handCardRank), handCardSuit)
+			chosenUpCard = util.Card(int(upCardRank), upCardSuit)
 
-                if(upCardRank == "A"): upCardRank = 14
-                if(upCardRank == "J"): upCardRank = 11
-                if(upCardRank == "Q"): upCardRank = 12
-                if(upCardRank == "K"): upCardRank = 13
+			print (chosenUpCard.toString(), chosenHandCard.toString()) 
 
-                upCardRank = str(upCardRank)
-               
-                for upCard in upCards:			#checks players hand for card with the same rank
-                	if str(upCard.getRank()) == upCardRank:
-                		upCardSuit = upCard.getSuit()
-                		break
-                	else:
-                		upCardSuit = "XYZ"		#card suit not a match for 'card'. returns suit as XYZ if there is no match
+			return (chosenUpCard, chosenHandCard)
 
-                chosenHandCard = util.Card(int(handCardRank), handCardSuit)
-                chosenUpCard = util.Card(int(upCardRank), upCardSuit)
+		else:
+			validInput = False
+			while not validInput:
+				try:
+					validInput = True
+					rankToPlay = raw_input("Enter the rank of the card/cards you want to play: ")
+					if rankToPlay == "": validInput = False
+					rankToPlay = rankToPlay.upper()
+				except:
+					validInput = False
+					print "INVALID INPUT"
 
-                print (chosenUpCard.toString(), chosenHandCard.toString()) 
+			if(rankToPlay == "A"): rankToPlay = 14
+			if(rankToPlay == "J"): rankToPlay = 11
+			if(rankToPlay == "Q"): rankToPlay = 12
+			if(rankToPlay == "K"): rankToPlay = 13
 
-                return (chosenUpCard, chosenHandCard)
+			rankToPlay = int(rankToPlay)
 
-            else:  #player choses to play first card
-                rankToPlay = raw_input("Enter the rank of the card/cards you want to play: ")
+			validInput = False
+			while not validInput:
+				try:
+					validInput = True
+					quantityToPlay = raw_input("Enter the number of cards you want to play:" )
+					if quantityToPlay == "": validInput = False
+					quantityToPlay = int(quantityToPlay)
+				except:
+					validInput = False
+					print "INVALID INPUT"
 
-                rankToPlay = rankToPlay.upper()
+			handToPlay = (rankToPlay, quantityToPlay)
+			action = self.getActionFromInput(playableCards, handToPlay)
+			return (None, action)
 
-                if(rankToPlay == "A"): rankToPlay = 14
-                if(rankToPlay == "J"): rankToPlay = 11
-                if(rankToPlay == "Q"): rankToPlay = 12
-                if(rankToPlay == "K"): rankToPlay = 13
+	# Update knowledge based on percept.
+	def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
+		return
 
-                quantityToPlay = raw_input("Enter the number of cards you want to play:" )
-                quantityToPlay = int(quantityToPlay)
+	# Accepts a tuple as input (rank, quantity) and converts it to an action list
+	# returns an empty list if the cards are not available
+	def getActionFromInput(self, playableCards, handToPlay):
+		action = []
+		counter = handToPlay[1] #keeps track of the number of cards to be played
+		for card in playableCards:
+			if (card.getRank() == handToPlay[0]):
+				action.append(card)
+				counter -= 1
+			if counter == 0: break
 
-                handToPlay = (int(rankToPlay), quantityToPlay)
-                action = self.getActionFromInput(playableCards, handToPlay)
-                return (None, action)
+		if(counter != 0): action = [] #returns an empty(invalid) list if the cards were not available
+		return action
 
-    # Update knowledge based on percept.
-    def updateKnowledge(self, perceptType, agentID=None, cardList=None, handCard=None):
-        return
-
-    # Accepts a tuple as input (rank, quantity) and converts it to an action list
-    # returns an empty list if the cards are not available
-    def getActionFromInput(self, playableCards, handToPlay):
-        action = []
-        counter = handToPlay[1] #keeps track of the number of cards to be played
-        for card in playableCards:
-            if (card.getRank() == handToPlay[0]):
-                action.append(card)
-                counter -= 1
-            if counter == 0: break
-
-        if(counter != 0): action = [] #returns an empty(invalid) list if the cards were not available
-        return action
-
-# The beginnings of a Q-learning agent. Nonfunctional.
+# A Q-learning agent.
 class QLearningAgent:
 
 	# Initialize representations, set constants.
-	def __init__(self, agentID, initialWeights):
+	def __init__(self, agentID):
 		self.agentID = agentID
 		self.type = "QLearningAgent"
-		self.pileRep = util.Stack()# Internal representation of the pile.
-		self.discardPileRep = []# Internal representation of the discard pile.
-		self.opponentHandRep = []# Internal representation of the opponent's hand.
+		self.pileRep = util.Stack()		# Internal representation of the pile.
+		self.discardPileRep = []	# Internal representation of the discard pile.
+		self.opponentHandRep = []	# Internal representation of the opponent's hand.
 		self.deckSize = 52 - 18
-		self.weights = initialWeights # Stores weights.
+		self.weights = util.Counter() # Stores weights.
 		self.epsilon = 0.2
 		self.alpha = 0.1
 		self.discount = 0.9
 		self.featExtractor = fe.featureExtractor()
 		self.inPreGame = True
-		self.gameEnded = False
 
 	def getID(self):
 		return self.agentID
@@ -678,20 +762,18 @@ class QLearningAgent:
 	def getType(self):
 		return self.type
 
-	def getWeights(self):
-		return self.weights
-
-	def setEnded(self, ended):
-		self.gameEnded = ended
-
 	# Look at legal actions and choose best hand cards to play.
 	def chooseHandCard(self, hand, upCards, playableCards):
-		state = self.constructState(hand, upCards, playableCards, self.gameEnded)
+		state = self.constructState(hand, upCards, playableCards)
+		#legalActions = self.getLegalActions(state)
+		state = st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
 		return self.getAction(state)
 
-        # Look at legal actions and choose best up cards to play.
+	# Look at legal actions and choose best up cards to play.
 	def chooseUpCard(self, upCards, playableCards):
-		state = self.constructState([], upCards, playableCards, self.gameEnded)
+		state = self.constructState([], upCards, playableCards)
+		#legalActions = self.getLegalActions(state)
+		state = st.State([], upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
 		return self.getAction(state)
 
 	# Trivial; return.
@@ -700,7 +782,8 @@ class QLearningAgent:
 
 	# Look at legal actions and choose best move; swap or take first turn.
 	def chooseSwap(self, hand, upCards, playableCards):
-		state = self.constructState(hand, upCards, playableCards, self.gameEnded)
+		state = self.constructState(hand, upCards, playableCards)
+		#legalActions = self.getLegalActions(state)
 		return self.getAction(state)
 
 	# Update knowledge based on percept.
@@ -726,142 +809,134 @@ class QLearningAgent:
 			for card in cardList:
 				if not agentID == self.getID() and card in self.opponentHandRep:
 					self.opponentHandRep.remove(card)
-					self.pileRep.push(card)
+				self.pileRep.push(card)
 		elif perceptType == "SWAP":
 			upCard = cardList
 			handCard = handCard
 			if not agentID == self.getID():
 				if handCard in self.opponentHandRep:
 					self.opponentHandRep.remove(handCard)
-					self.opponentHandRep.append(upCard)
+				self.opponentHandRep.append(upCard)
 		elif perceptType == "DRAW":
 			self.deckSize -= cardList
 		else:
 			print "INVALID PERCEPT TYPE"
 		return
-
-
-        #######################################################
-        #######################################################
-        # LEARNING-SPECIFIC METHODS
-        #######################################################
-        #######################################################
-
-	def getValue(self, state):
-		"""
-		Returns max_action Q(state,action)
-		where the max is over legal actions.  Note that if
-		there are no legal actions, which is the case at the
-		terminal state, you should return a value of 0.0.
-		"""
-	        
-	        # All possible actions from state.
-	        actions = self.getLegalActions(state)
-		# Terminal test.
-		if state.isTerminal():
-			return 0.0 
-		elif actions == []:
-			return self.getQValue(state, [])
-		maxQValue = float("-inf")
-		# Find maximum QValue over all actions.
-		for action in actions:
-			QValue = self.getQValue(state, action)
-			if QValue > maxQValue:
-				maxQValue = QValue
-								              
-		return maxQValue
-
-	def getPolicy(self, state):
-		"""
-		Compute the best action to take in a state.  Note that if there
-		are no legal actions, which is the case at the terminal state,
-		you should return None.
-		"""
-		"*** YOUR CODE HERE ***"
 		
-		actions = self.getLegalActions(state)
 
-		# Terminal test.
-		if actions == [] or state.isTerminal():
-			return []
-		maxQValue = float("-inf")
-		# Keep a list of actions with equally maximal QValues. 
-		maximizingActions = []
-		for action in actions:
-			QValue = self.getQValue(state, action)
-			# If new QValue is strictly greater, list now only contains the new action.
-			if QValue > maxQValue:
-				maxQValue = QValue
-				maximizingActions = [action]
-			# If QValue comparison is a tie, add new item to the list.
-			elif QValue == maxQValue:
-				maximizingActions.append(action)
+	#######################################################
+	#######################################################
+	# LEARNING-SPECIFIC METHODS
+	#######################################################
+	#######################################################
 
-		# Choose randomly amongst tied actions. Random selection improves performance (value exploration).
-		return random.choice(maximizingActions)
+  	def getValue(self, state):
+	    """
+	      Returns max_action Q(state,action)
+	      where the max is over legal actions.  Note that if
+	      there are no legal actions, which is the case at the
+	      terminal state, you should return a value of 0.0.
+	    """
+	    
+	    # All possible actions from state.
+	    actions = self.getLegalActions(state)
+	    # Terminal test.
+	    if not actions:
+	      return 0.0 
+	    maxQValue = float("-inf")
+	    # Find maximum QValue over all actions.
+	    for action in actions:
+	      QValue = self.getQValue(state, action)
+	      if QValue > maxQValue:
+	        maxQValue = QValue
+	          
+	    return maxQValue
 
-	def getAction(self, state):
+  	def getPolicy(self, state):
+	    """
+	      Compute the best action to take in a state.  Note that if there
+	      are no legal actions, which is the case at the terminal state,
+	      you should return None.
+	    """
+	    "*** YOUR CODE HERE ***"
+
+	    actions = self.getLegalActions(state)
+
+	    # Terminal test.
+	    if actions == []:
+	    	return []
+	    maxQValue = float("-inf")
+	    # Keep a list of actions with equally maximal QValues. 
+	    maximizingActions = []
+	    for action in actions:
+		    QValue = self.getQValue(state, action)
+		    # If new QValue is strictly greater, list now only contains the new action.
+		    if QValue > maxQValue:
+		        maxQValue = QValue
+		        maximizingActions = [action]
+		    # If QValue comparison is a tie, add new item to the list.
+		    elif QValue == maxQValue:
+		        maximizingActions.append(action)
+
+	    # Choose randomly amongst tied actions. Random selection improves performance (value exploration).
+	    return random.choice(maximizingActions)
+
+  	def getAction(self, state):
 		"""
 		Compute the action to take in the current state.  With
 		probability self.epsilon, we should take a random action and
 		take the best policy action otherwise.  Note that if there are
 		no legal actions, which is the case at the terminal state, you
 		should choose None as the action.
-		
+
 		HINT: You might want to use util.flipCoin(prob)
 		HINT: To pick randomly from a list, use random.choice(list)
 		"""
 		legalActions = self.getLegalActions(state)
-		
+
 		if legalActions == []:
 			return []
-		
+
 		explore = util.flipCoin(self.epsilon)
 		if explore:
-			action = random.choice(legalActions)
-			return action
+			return random.choice(legalActions)
 		else:
 			return self.getPolicy(state)
 
-	def getQValue(self, state, action):
-		"""
-		Should return Q(state,action) = w * featureVector
-		where * is the dotProduct operator
-		"""
+ 	def getQValue(self, state, action):
+	    """
+	      Should return Q(state,action) = w * featureVector
+	      where * is the dotProduct operator
+	    """
 
-	        # Dictionary of (feature->value) pairs.
-	        featureDict = self.featExtractor.getFeatures(state, action)
-		# List of features (keys)
-		featureVector = featureDict.keys()
+	    # Dictionary of (feature->value) pairs.
+	    featureDict = self.featExtractor.getFeatures(state, action)
+	    # List of features (keys)
+	    featureVector = featureDict.keys()
 
-		QValue = 0
-		# QValue = sum over all feature values weighted by feature weights.
-		for feature in featureVector:
-			QValue += self.weights[feature]*featureDict[feature]
+	    QValue = 0
+	    # QValue = sum over all feature values weighted by feature weights.
+	    for feature in featureVector:
+	      QValue += self.weights[feature]*featureDict[feature]
 
-		return QValue
+	    return QValue
 
-	def update(self, state, action, nextState, reward):
-		"""
-		Should update your weights based on transition
-		"""
+  	def update(self, state, action, nextState, reward):
+	    """
+	       Should update your weights based on transition
+	    """
 
-		# Dictionary of (feature->value) pairs.
-		featureDict = self.featExtractor.getFeatures(state, action)
-		# List of features (keys)
-		featureVector = featureDict.keys()
+	    # Dictionary of (feature->value) pairs.
+	    featureDict = self.featExtractor.getFeatures(state, action)
+	    # List of features (keys)
+	    featureVector = featureDict.keys()
 
-		# Weight correction value.
-		print "Reward: " + str(reward)
-		print "Gamma: " + str(self.discount)
-		print "Next State Value: " + str(self.getValue(nextState))
-		print "Old State Value: " + str(self.getQValue(state, action))
-		correction = (reward + self.discount*self.getValue(nextState)) - self.getQValue(state, action)
-		print "Correction: " + str(correction)
+	    # Weight correction value.
+	    correction = (reward + self.discount*self.getValue(nextState)) - self.getQValue(state, action)
 
-		# Update all weights.
-		for feature in featureVector:
-			self.weights[feature] += self.alpha*correction*featureDict[feature]
+	    # Update all weights.
+	    for feature in featureVector:
+	      self.weights[feature] += self.alpha*correction*featureDict[feature]
 
 	# Returns a list of lists, each inner list representing a legal action (swaps included).
 	def getLegalActions(self, state):
@@ -869,7 +944,7 @@ class QLearningAgent:
 		upCards = state.getUpCards()
 		playableCards = state.getPlayableCards()
 		actions = []
-
+		
 		if self.inPreGame == True:
 			# Compile list of swaps.
 			for handCard in hand:
@@ -881,9 +956,12 @@ class QLearningAgent:
 		listsOfRanks = dict()
 		for rank in range(2, 15):
 			listsOfRanks[rank] = []
-			for card in playableCards:
-				rank = card.getRank()
-				listsOfRanks[rank].append(card)
+		for card in playableCards:
+			rank = card.getRank()
+			listsOfRanks[rank].append(card)
+		for rank in listsOfRanks.keys():
+			if not listsOfRanks[rank] == []:
+				actions.append(listsOfRanks[rank])
 
 		for rank in listsOfRanks.keys():
 			rankList = listsOfRanks[rank]
@@ -891,10 +969,10 @@ class QLearningAgent:
 				subsetList = []
 				for i in range(0, index+1):
 					subsetList.append(rankList[i])
-					if self.inPreGame:
-						actions.append((None, subsetList))
-					else:
-						actions.append(subsetList)
+				if self.inPreGame:
+					actions.append((None, subsetList))
+				else:
+					actions.append(subsetList)
 
 		output = "LEGAL ACTIONS: {"
 		for action in actions:
@@ -904,20 +982,24 @@ class QLearningAgent:
 					output += "None, ["
 					for card in action[1]:
 						output += card.toString() + ", "
-						output += "]"
-					else: 
-						output += action[0].toString() + ", " + action[1].toString()
-						output += ")"
-				else:
-					output += "["
-					for card in action:
-						output += card.toString() + ", "
-						output += "]"
-						output += ")"
-						output += "}"
+					output += "]"
+				else: 
+					output += action[0].toString() + ", " + action[1].toString()
+				output += ")"
+			else:
+				output += "["
+				for card in action:
+					output += card.toString() + ", "
+				output += "]"
+			output += ")"
+		output += "}"
 		print output
 
 		return actions
 
-	def constructState(self, hand, upCards, playableCards, isTerminal):
-		return st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize, isTerminal)
+	def constructState(self, hand, upCards, playableCards):
+		return st.State(hand, upCards, playableCards, self.opponentHandRep, self.pileRep, self.discardPileRep, self.deckSize)
+
+
+
+
